@@ -55,7 +55,6 @@ public class Equations {
         if(tc>tcAux){ tc = tcAux;}
         return tc;
     }
-
     public double CollisionParticles(Particle p, Collection<Particle> particles){
         double tc,d, dTimesR, tcAux;
         tc = Double.POSITIVE_INFINITY;
@@ -73,7 +72,6 @@ public class Equations {
         }
         return tc;
     }
-
     public Collection<Particle> EvolveParticlesPositions(Collection<Particle> particles, double tc){
         for(Particle p : particles){
             p.getPosition().setX(p.getPosition().getX() + p.getVelocity().getxSpeed() * tc);
@@ -81,7 +79,6 @@ public class Equations {
         }
         return particles;
     }
-
     public Velocity EvolveParticleVelocities(Particle p1, boolean vertical){
         if(vertical){
             return new Velocity(-p1.getVelocity().getxSpeed(), p1.getVelocity().getySpeed());
