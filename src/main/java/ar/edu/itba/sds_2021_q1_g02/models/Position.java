@@ -1,8 +1,8 @@
 package ar.edu.itba.sds_2021_q1_g02.models;
 
 public class Position {
-    protected final double x;
-    protected final double y;
+    private double x;
+    private double y;
 
     public Position(double x, double y) {
         this.x = x;
@@ -12,11 +12,15 @@ public class Position {
     public double getX() {
         return this.x;
     }
+    public void setX(double x) { this.x  = x;}
 
     public double getY() {
         return this.y;
     }
 
+    public void setY(double y) {
+        this.y = y;
+    }
 
     public Position copy() {
         return new Position(this.x, this.y);
