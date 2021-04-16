@@ -64,22 +64,22 @@ public class Equations {
         }
         return new Pair<>(tc,wall);
     }
-    public double CollisionParticles(Particle p, Collection<Particle> particles){
+    public Pair<Double, Particle> CollisionParticles(Particle p, Collection<Particle> particles){
         double tc,d, dTimesR, tcAux;
+        Particle particle = null;
         tc = Double.POSITIVE_INFINITY;
-        boolean firstParticle = true;
         for (Particle p2 : particles){
             d = d(p,p2);
             dTimesR =deltaVTimesdeltaR(p,p2);
             if(d(p,p2)> 0 && dTimesR<0 && !p2.equals(p)){
                 tcAux = (- dTimesR + Math.sqrt(d))/deltaVTimesdeltaV(p,p2);
-                if(firstParticle || tcAux < tc ){
-                    firstParticle = false;
+                if(tcAux < tc ){
+                    particle = p2;
                     tc = tcAux;
                 }
             }
         }
-        return tc;
+        return new Pair<>(tc, particle);
     }
     public Collection<Particle> EvolveParticlesPositions(Collection<Particle> particles, double tc){
         for(Particle p : particles){
