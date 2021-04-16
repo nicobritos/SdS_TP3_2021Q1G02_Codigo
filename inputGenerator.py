@@ -33,7 +33,7 @@ def generate(file_path, percentage):
     present = {}
 
     while len(present) < count:
-        present[str(randrange(w)) + str(randrange(h))] = True
+        present[str(round(randrange(w),4)) + str(round(randrange(h), 4))] = True
 
     for y in range(h):
         for x in range(w):
@@ -45,17 +45,17 @@ def generate(file_path, percentage):
                 input.write('1')
                 input.write('\t')
                 # x
-                input.write(str(radius + x*2*radius))
+                input.write(str(round(radius + x*2*radius,4)))
                 input.write('\t')
                 # y
-                input.write(str(radius + y*2*radius))
+                input.write(str(round(radius + y*2*radius,4)))
                 input.write('\t')
                 # vx 
-                vx = random.uniform(-0.01, 0.01)
+                vx = round(random.uniform(-0.01, 0.01),4)
                 input.write(str(vx))
                 input.write('\t')
                 # vy
-                vy = math.sqrt(0.01**2 - vx**2)
+                vy = round(math.sqrt(0.01**2 - vx**2),4)
                 input.write(str(vy))
                 input.write('\t')
 

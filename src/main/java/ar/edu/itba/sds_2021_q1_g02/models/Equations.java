@@ -1,6 +1,7 @@
 package ar.edu.itba.sds_2021_q1_g02.models;
 
 import java.util.*;
+import javafx.util.Pair;
 
 public class Equations {
     public boolean NoOverlap(Particle p1){
@@ -12,10 +13,11 @@ public class Equations {
         return true;
     }
     // returns the min time that it will collide with a wall
-    public double CollisionWall(Particle p){
+    public Pair<Double,String> CollisionWall(Particle p){
         double x0 = p.getPosition().getX();
         double y0 = p.getPosition().getY();
         double xWall, yWall, tc, tcAux, tcAux1;
+        String wall;
 
         // collision with vertical walls
         if(p.getVelocity().getxSpeed() > 0){
@@ -26,6 +28,7 @@ public class Equations {
             xWall = 0;
             tc = (xWall + p.getRadius() - x0)/p.getVelocity().getxSpeed();
         }
+        wall = "vertical";
         // collision with horizontal walls
         if(p.getVelocity().getySpeed() > 0){
             yWall = 0.9;
@@ -35,7 +38,10 @@ public class Equations {
             yWall = 0;
             tcAux = (yWall + p.getRadius() - y0)/p.getVelocity().getySpeed();
         }
-        if(tc>tcAux){ tc = tcAux;}
+        if(tc>tcAux){
+            tc = tcAux;
+            wall = "horizontal";
+        }
 
         // collision with intermediate walls (vertical)
         if(p.getVelocity().getxSpeed() > 0 && p.getPosition().getX() < 0.12){
@@ -52,8 +58,11 @@ public class Equations {
                 tcAux = tcAux1;
             }
         }
-        if(tc>tcAux){ tc = tcAux;}
-        return tc;
+        if(tc>tcAux){
+            tc = tcAux;
+            wall = "vertical";
+        }
+        return new Pair<>(tc,wall);
     }
     public double CollisionParticles(Particle p, Collection<Particle> particles){
         double tc,d, dTimesR, tcAux;

@@ -3,7 +3,7 @@ package ar.edu.itba.sds_2021_q1_g02.parsers;
 import ar.edu.itba.sds_2021_q1_g02.models.Particle;
 import ar.edu.itba.sds_2021_q1_g02.models.Position;
 import ar.edu.itba.sds_2021_q1_g02.models.Velocity;
-import jdk.internal.net.http.common.Pair;
+import javafx.util.Pair;
 
 import java.io.File;
 import java.io.FileNotFoundException;
