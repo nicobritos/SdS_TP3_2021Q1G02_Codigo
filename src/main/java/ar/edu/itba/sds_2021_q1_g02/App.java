@@ -1,5 +1,6 @@
 package ar.edu.itba.sds_2021_q1_g02;
 
+import ar.edu.itba.sds_2021_q1_g02.models.Dimen;
 import ar.edu.itba.sds_2021_q1_g02.models.Particle;
 import ar.edu.itba.sds_2021_q1_g02.parsers.CommandParser;
 import ar.edu.itba.sds_2021_q1_g02.parsers.ParticleParser;
