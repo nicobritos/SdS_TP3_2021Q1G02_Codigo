@@ -7,65 +7,79 @@ import java.util.Collection;
 import java.util.List;
 
 public class Equations {
+    public boolean NoOverlap(Particle p1) {
+        for (Particle p2 : p1.getNeighbors()) {
+            if (this.xyOverlap(p1, p2) < this.radiusOverlap(p1, p2)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private double collisionTimeWithWall(double iWall, double fWall, double partPos, double partRadius,
+                                         double partSpeed) {
+        double tc;
+        if (partSpeed > 0) {
+            tc = Mru.timeCalculation(partPos, fWall - partRadius, partSpeed);
+        } else {
+            tc = Mru.timeCalculation(partPos, iWall + partRadius, partSpeed);
+        }
+        return tc;
+    }
+
     // returns the min time that it will collide with a wall
-    public Pair<Double, String> CollisionWall(Particle p) {
+    public Pair<Double, Direction> CollisionWall(Particle p, Dimen systemDimens) {
         double x0 = p.getPosition().getX();
         double y0 = p.getPosition().getY();
         double xWall, yWall, tc, tcAux, tcAux1;
-        String wall;
+        Direction wall;
 
         // collision with vertical walls
-        if (p.getVelocity().getxSpeed() > 0) {
-            xWall = 0.24;
-            tc = (xWall - p.getRadius() - x0) / p.getVelocity().getxSpeed();
-        } else {
-            xWall = 0;
-            tc = (xWall + p.getRadius() - x0) / p.getVelocity().getxSpeed();
-        }
-        wall = "vertical";
+        tc = this.collisionTimeWithWall(systemDimens.getXvi(), systemDimens.getXvf(), x0, p.getRadius(),
+                p.getVelocity().getxSpeed());
+        wall = Direction.VERTICAL;
+
         // collision with horizontal walls
-        if (p.getVelocity().getySpeed() > 0) {
-            yWall = 0.9;
-            tcAux = (yWall - p.getRadius() - y0) / p.getVelocity().getySpeed();
-        } else {
-            yWall = 0;
-            tcAux = (yWall + p.getRadius() - y0) / p.getVelocity().getySpeed();
-        }
+        tcAux = this.collisionTimeWithWall(systemDimens.getYvi(), systemDimens.getYvf(), y0, p.getRadius(),
+                p.getVelocity().getySpeed());
+
+        // compare vertical and horizontal time collision and keep the MIN
         if (tc > tcAux) {
             tc = tcAux;
-            wall = "horizontal";
+            wall = Direction.HORIZONTAL;
         }
 
         // collision with intermediate walls (vertical)
-        if (p.getVelocity().getxSpeed() > 0 && p.getPosition().getX() < 0.12) {
-            xWall = 0.12;
-            tcAux1 = (xWall - p.getRadius() - x0) / p.getVelocity().getxSpeed();
-            if (this.getParticlePos(tcAux1, p).getX() > 0.4 || this.getParticlePos(tcAux1, p).getX() < 0.5) {
+        if (p.getVelocity().getxSpeed() > 0 && p.getPosition().getX() < systemDimens.getApertureX()) {
+            tcAux1 = Mru.timeCalculation(x0, systemDimens.getApertureX() - p.getRadius(), p.getVelocity().getxSpeed());
+            if (this.getParticlePos(tcAux1, p).getX() < systemDimens.getApertureYvi() || this.getParticlePos(tcAux1,
+                    p).getX() > systemDimens.getApertureYvf()) {
                 tcAux = tcAux1;
             }
-        } else if (p.getVelocity().getxSpeed() < 0 && p.getPosition().getX() > 0.12) {
-            xWall = 0.12;
-            tcAux1 = (xWall + p.getRadius() - x0) / p.getVelocity().getxSpeed();
-            if (this.getParticlePos(tcAux1, p).getX() > 0.4 || this.getParticlePos(tcAux1, p).getX() < 0.5) {
+        } else if (p.getVelocity().getxSpeed() < 0 && p.getPosition().getX() > systemDimens.getApertureX()) {
+            tcAux1 = Mru.timeCalculation(x0, systemDimens.getApertureX() + p.getRadius(), p.getVelocity().getxSpeed());
+            if (this.getParticlePos(tcAux1, p).getX() < 0.4 || this.getParticlePos(tcAux1, p).getX() > 0.5) {
                 tcAux = tcAux1;
             }
         }
+
+        // compare vertical and horizontal time collision and keep the MIN
         if (tc > tcAux) {
             tc = tcAux;
-            wall = "vertical";
+            wall = Direction.VERTICAL;
         }
         return new Pair<>(tc, wall);
     }
 
     public Pair<Double, Particle> CollisionParticles(Particle p, Collection<Particle> particles) {
-        double tc, d, dTimesR, tcAux;
+        double tc, d, dVTimesdR, tcAux;
         Particle particle = null;
         tc = Double.POSITIVE_INFINITY;
         for (Particle p2 : particles) {
             d = this.d(p, p2);
-            dTimesR = this.deltaVTimesdeltaR(p, p2);
-            if (this.d(p, p2) > 0 && dTimesR < 0 && !p2.equals(p)) {
-                tcAux = (-dTimesR + Math.sqrt(d)) / this.deltaVTimesdeltaV(p, p2);
+            dVTimesdR = this.deltaVTimesdeltaR(p, p2);
+            if (d >= 0 && dVTimesdR < 0 && !p2.equals(p)) {
+                tcAux = (-dVTimesdR + Math.sqrt(d)) / this.deltaVTimesdeltaV(p, p2);
                 if (tcAux < tc) {
                     particle = p2;
                     tc = tcAux;
@@ -91,9 +105,11 @@ public class Equations {
     }
 
     public List<Velocity> EvolveParticleVelocities(Particle p1, Particle p2) {
-        Velocity v1d = new Velocity(p1.getVelocity().getxSpeed() + (this.Jx(p1, p2) / p1.getMass()), p1.getVelocity().getySpeed() + (this.Jy(p1, p2) / p1.getMass()));
-        Velocity v2d = new Velocity(p2.getVelocity().getxSpeed() - (this.Jx(p1, p2) / p2.getMass()), p2.getVelocity().getySpeed() - (this.Jy(p1, p2) / p2.getMass()));
-        List<Velocity> v = new ArrayList<>();
+        Velocity v1d = new Velocity(p1.getVelocity().getxSpeed() + (this.Jx(p1, p2) / p1.getMass()),
+                p1.getVelocity().getySpeed() + (this.Jy(p1, p2) / p1.getMass()));
+        Velocity v2d = new Velocity(p2.getVelocity().getxSpeed() - (this.Jx(p1, p2) / p2.getMass()),
+                p2.getVelocity().getySpeed() - (this.Jy(p1, p2) / p2.getMass()));
+        List<Velocity> v = new ArrayList<Velocity>();
         v.add(v1d);
         v.add(v2d);
         return v;
@@ -165,8 +181,8 @@ public class Equations {
 
     private Position getParticlePos(double time, Particle p) {
         Position newPos = new Position(0, 0);
-        newPos.setX(p.getPosition().getX() + time * p.getVelocity().getxSpeed());
-        newPos.setY(p.getPosition().getY() + time * p.getVelocity().getySpeed());
+        newPos.setX(Mru.positionCalculation(p.getPosition().getX(), time, p.getVelocity().getxSpeed()));
+        newPos.setY(Mru.positionCalculation(p.getPosition().getY(), time, p.getVelocity().getySpeed()));
         return newPos;
     }
 }
