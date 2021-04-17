@@ -6,32 +6,23 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class Equations {
-    public boolean NoOverlap(Particle p1) {
-        for (Particle p2 : p1.getNeighbors()) {
-            if (this.xyOverlap(p1, p2) < this.radiusOverlap(p1, p2)) {
-                return false;
-            }
-        }
-        return true;
+public final class Equations {
+    private static Equations instance;
+
+    public static Equations getInstance() {
+        if (instance == null)
+            instance = new Equations();
+
+        return instance;
     }
 
-    private double collisionTimeWithWall(double iWall, double fWall, double partPos, double partRadius,
-                                         double partSpeed) {
-        double tc;
-        if (partSpeed > 0) {
-            tc = Mru.timeCalculation(partPos, fWall - partRadius, partSpeed);
-        } else {
-            tc = Mru.timeCalculation(partPos, iWall + partRadius, partSpeed);
-        }
-        return tc;
-    }
+    private Equations() {}
 
     // returns the min time that it will collide with a wall
-    public Pair<Double, Direction> CollisionWall(Particle p, Dimen systemDimens) {
+    public Pair<Double, Direction> collisionWall(Particle p, Dimen systemDimens) {
         double x0 = p.getPosition().getX();
         double y0 = p.getPosition().getY();
-        double xWall, yWall, tc, tcAux, tcAux1;
+        double tc, tcAux, tcAux1;
         Direction wall;
 
         // collision with vertical walls
@@ -71,7 +62,8 @@ public class Equations {
         return new Pair<>(tc, wall);
     }
 
-    public Pair<Double, Particle> CollisionParticles(Particle p, Collection<Particle> particles) {
+    // returns the min time that it will collide with another particle
+    public Pair<Double, Particle> collisionParticles(Particle p, Collection<Particle> particles) {
         double tc, d, dVTimesdR, tcAux;
         Particle particle = null;
         tc = Double.POSITIVE_INFINITY;
@@ -89,11 +81,12 @@ public class Equations {
         return new Pair<>(tc, particle);
     }
 
-    public Collection<Particle> EvolveParticlesPositions(Collection<Particle> particles, double tc) {
+    public Collection<Particle> evolveParticlesPositions(Collection<Particle> particles, double tc) {
         for (Particle p : particles) {
             p.getPosition().setX(p.getPosition().getX() + p.getVelocity().getxSpeed() * tc);
             p.getPosition().setY(p.getPosition().getY() + p.getVelocity().getySpeed() * tc);
         }
+
         return particles;
     }
 
@@ -102,7 +95,7 @@ public class Equations {
                 new Velocity(p.getVelocity().getxSpeed(), -p.getVelocity().getySpeed());
     }
 
-    public List<Velocity> EvolveParticlesVelocities(Particle p1, Particle p2) {
+    public List<Velocity> evolveParticlesVelocities(Particle p1, Particle p2) {
         Velocity v1d = new Velocity(p1.getVelocity().getxSpeed() + (this.Jx(p1, p2) / p1.getMass()),
                 p1.getVelocity().getySpeed() + (this.Jy(p1, p2) / p1.getMass()));
         Velocity v2d = new Velocity(p2.getVelocity().getxSpeed() - (this.Jx(p1, p2) / p2.getMass()),
@@ -111,6 +104,17 @@ public class Equations {
         v.add(v1d);
         v.add(v2d);
         return v;
+    }
+
+    private double collisionTimeWithWall(double iWall, double fWall, double partPos, double partRadius,
+                                         double partSpeed) {
+        double tc;
+        if (partSpeed > 0) {
+            tc = Mru.timeCalculation(partPos, fWall - partRadius, partSpeed);
+        } else {
+            tc = Mru.timeCalculation(partPos, iWall + partRadius, partSpeed);
+        }
+        return tc;
     }
 
     private double J(Particle p1, Particle p2) {

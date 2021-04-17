@@ -6,34 +6,80 @@ import ar.edu.itba.sds_2021_q1_g02.models.Equations;
 import ar.edu.itba.sds_2021_q1_g02.models.Particle;
 import javafx.util.Pair;
 
-import java.lang.reflect.Parameter;
 import java.util.*;
 
 public class GasDiffusion {
-    Dimen dimen = new Dimen(0, 0.24, 0, 0.09, 0.01);
-    int M;
-    List<Particle> particles;
+    private final Dimen dimen;
+    private final List<Particle> particles;
 
-    public GasDiffusion(List<Particle> particles, final int M) {
+    public GasDiffusion(List<Particle> particles, Dimen dimen) {
         this.particles = particles;
-        this.M = M;
+        this.dimen = dimen;
     }
 
     public void simulate(int maxIterations) {
-        List<Pair<Double, Direction>> tcList = new ArrayList<Pair<Double, Direction>>();
-        List<Double> timeList = new ArrayList<Double>();
-        Equations eq = new Equations();
+        int i = 0;
+
+        while (i < maxIterations) {
+            this.simulateStep();
+            i++;
+        }
+    }
+
+    private void simulateStep() {
+        double minStepTime = Double.POSITIVE_INFINITY;
+        List<Pair<Particle, Direction>> wallCollisions = new LinkedList<>();
+        List<Pair<Particle, Particle>> particleCollisions = new LinkedList<>();
+
         for (Particle p : this.particles) {
-            Pair<Double, Direction> tc = eq.CollisionWall(p, this.dimen);
-            tcList.add(tc);
-            timeList.add(tc.getKey());
-            //estaba checkeando nomas que este bien me voy  a clase we
-            if (tc.getKey() == -0.0) {
-                System.out.println(p.getPosition().getX());
-                System.out.println(p.getVelocity().getxSpeed());
+            Pair<Double, Direction> wallCollision = Equations.getInstance().collisionWall(p, this.dimen);
+            Pair<Double, Particle> particleCollision = Equations.getInstance().collisionParticles(p, this.particles);
+
+            // If a wall collision happens before a particle collision
+            if (wallCollision.getKey() < particleCollision.getKey()) {
+                // If the wall collision happens before the first collision in the system
+                if (wallCollision.getKey() < minStepTime) {
+                    // Set new min time, clear lists and add the new collision
+                    minStepTime = wallCollision.getKey();
+                    particleCollisions.clear();
+                    wallCollisions.clear();
+                    wallCollisions.add(new Pair<>(p, wallCollision.getValue()));
+                } else if (wallCollision.getKey() == minStepTime) {
+                    // TODO: Probably use an epsilon (ex. e-10)
+                    // Just add the new collision
+                    wallCollisions.add(new Pair<>(p, wallCollision.getValue()));
+                }
+            } else if (particleCollision.getKey() < minStepTime) {
+                // Set new min time, clear previous list and add the new collision
+                minStepTime = particleCollision.getKey();
+                particleCollisions.clear();
+                wallCollisions.clear();
+                particleCollisions.add(new Pair<>(p, particleCollision.getValue()));
+
+                // TODO: Probably use an epsilon (ex. e-10)
+                if (particleCollision.getKey().doubleValue() == wallCollision.getKey().doubleValue()) {
+                    wallCollisions.add(new Pair<>(p, wallCollision.getValue()));
+                }
+            } else if (particleCollision.getKey() == minStepTime) {
+                // TODO: Probably use an epsilon (ex. e-10)
+
+                // Just add the new collision
+                particleCollisions.add(new Pair<>(p, particleCollision.getValue()));
+
+                // TODO: Probably use an epsilon (ex. e-10)
+                if (particleCollision.getKey().doubleValue() == wallCollision.getKey().doubleValue()) {
+                    wallCollisions.add(new Pair<>(p, wallCollision.getValue()));
+                }
             }
         }
-        Collections.sort(timeList);
-        System.out.println(tcList);
+
+        Equations.getInstance().evolveParticlesPositions(this.particles, minStepTime);
+
+        wallCollisions.forEach(particleDirectionPair -> {
+            Equations.getInstance().evolveParticleVelocities(particleDirectionPair.getKey(), particleDirectionPair.getValue());
+        });
+        particleCollisions.forEach(particleParticlePair -> {
+            Equations.getInstance().evolveParticlesVelocities(particleParticlePair.getKey(), particleParticlePair.getValue());
+        });
     }
 }
