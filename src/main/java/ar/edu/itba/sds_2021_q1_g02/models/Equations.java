@@ -1,8 +1,10 @@
 package ar.edu.itba.sds_2021_q1_g02.models;
 
-import java.util.*;
-
 import javafx.util.Pair;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class Equations {
     public boolean NoOverlap(Particle p1) {
@@ -183,6 +185,4 @@ public class Equations {
         newPos.setY(Mru.positionCalculation(p.getPosition().getY(), time, p.getVelocity().getySpeed()));
         return newPos;
     }
-
-
 }
