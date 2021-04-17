@@ -7,15 +7,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class Equations {
-    public boolean NoOverlap(Particle p1) {
-        for (Particle p2 : p1.getNeighbors()) {
-            if (this.xyOverlap(p1, p2) < this.radiusOverlap(p1, p2)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     // returns the min time that it will collide with a wall
     public Pair<Double, String> CollisionWall(Particle p) {
         double x0 = p.getPosition().getX();
