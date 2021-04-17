@@ -24,7 +24,7 @@ public abstract class ParticleParser {
             String data = myReader.nextLine();
             M = Integer.parseInt(data);
 
-            particles = new ArrayList<>((int) (Math.pow(M, 3)));
+            particles = new ArrayList<>(M);
 
             while (myReader.hasNextLine()) {
                 data = myReader.nextLine();
@@ -34,6 +34,7 @@ public abstract class ParticleParser {
                 particles.add(particle);
                 i++;
             }
+
             myReader.close();
         } catch (FileNotFoundException e) {
             System.out.println("An error occurred.");
