@@ -97,11 +97,9 @@ public class Equations {
         return particles;
     }
 
-    public Velocity EvolveParticleVelocities(Particle p1, boolean vertical) {
-        if (vertical) {
-            return new Velocity(-p1.getVelocity().getxSpeed(), p1.getVelocity().getySpeed());
-        }
-        return new Velocity(p1.getVelocity().getxSpeed(), -p1.getVelocity().getySpeed());
+    public Velocity EvolveParticleVelocity(Particle p, boolean vertical) {
+        return vertical ? new Velocity(-p.getVelocity().getxSpeed(), p.getVelocity().getySpeed()) :
+                new Velocity(p.getVelocity().getxSpeed(), -p.getVelocity().getySpeed());
     }
 
     public List<Velocity> EvolveParticlesVelocities(Particle p1, Particle p2) {
