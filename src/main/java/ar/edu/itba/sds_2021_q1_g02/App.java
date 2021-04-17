@@ -11,15 +11,16 @@ import java.io.IOException;
 import java.util.List;
 
 public class App {
-
     public static void main(String[] args) throws ParseException, IOException {
         CommandParser.getInstance().parse(args);
+
         System.out.println("Parsing particles");
         Pair<List<Particle>, Integer> particles = ParticleParser.parseParticles(CommandParser.getInstance().getInputPath());
-        GasDiffusion GD = new GasDiffusion(particles.getKey(), particles.getValue());
+
+        Dimen dimen = new Dimen(0, 0.24, 0, 0.09, 0.01);
+        GasDiffusion GD = new GasDiffusion(particles.getKey(), dimen);
 
         System.out.println("Running simulation");
         GD.simulate(CommandParser.getInstance().getMaxIterations());
-
     }
 }
