@@ -52,13 +52,13 @@ public class Equations {
         // collision with intermediate walls (vertical)
         if (p.getVelocity().getxSpeed() > 0 && p.getPosition().getX() < systemDimens.getApertureX()) {
             tcAux1 = Mru.timeCalculation(x0, systemDimens.getApertureX() - p.getRadius(), p.getVelocity().getxSpeed());
-            if (this.getParticlePos(tcAux1, p).getX() < systemDimens.getApertureYvi() || this.getParticlePos(tcAux1,
+            if (this.getParticlePosByTime(tcAux1, p).getX() < systemDimens.getApertureYvi() || this.getParticlePosByTime(tcAux1,
                     p).getX() > systemDimens.getApertureYvf()) {
                 tcAux = tcAux1;
             }
         } else if (p.getVelocity().getxSpeed() < 0 && p.getPosition().getX() > systemDimens.getApertureX()) {
             tcAux1 = Mru.timeCalculation(x0, systemDimens.getApertureX() + p.getRadius(), p.getVelocity().getxSpeed());
-            if (this.getParticlePos(tcAux1, p).getX() < 0.4 || this.getParticlePos(tcAux1, p).getX() > 0.5) {
+            if (this.getParticlePosByTime(tcAux1, p).getX() < 0.4 || this.getParticlePosByTime(tcAux1, p).getX() > 0.5) {
                 tcAux = tcAux1;
             }
         }
@@ -79,7 +79,7 @@ public class Equations {
             d = this.d(p, p2);
             dVTimesdR = this.deltaVTimesdeltaR(p, p2);
             if (d >= 0 && dVTimesdR < 0 && !p2.equals(p)) {
-                tcAux = (-dVTimesdR + Math.sqrt(d)) / this.deltaVTimesdeltaV(p, p2);
+                tcAux = (-(dVTimesdR + Math.sqrt(d)) / this.deltaVTimesdeltaV(p, p2));
                 if (tcAux < tc) {
                     particle = p2;
                     tc = tcAux;
@@ -104,12 +104,12 @@ public class Equations {
         return new Velocity(p1.getVelocity().getxSpeed(), -p1.getVelocity().getySpeed());
     }
 
-    public List<Velocity> EvolveParticleVelocities(Particle p1, Particle p2) {
+    public List<Velocity> EvolveParticlesVelocities(Particle p1, Particle p2) {
         Velocity v1d = new Velocity(p1.getVelocity().getxSpeed() + (this.Jx(p1, p2) / p1.getMass()),
                 p1.getVelocity().getySpeed() + (this.Jy(p1, p2) / p1.getMass()));
         Velocity v2d = new Velocity(p2.getVelocity().getxSpeed() - (this.Jx(p1, p2) / p2.getMass()),
                 p2.getVelocity().getySpeed() - (this.Jy(p1, p2) / p2.getMass()));
-        List<Velocity> v = new ArrayList<Velocity>();
+        List<Velocity> v = new ArrayList<>();
         v.add(v1d);
         v.add(v2d);
         return v;
@@ -179,7 +179,7 @@ public class Equations {
         return Math.pow(p1.getRadius() + p2.getRadius(), 2);
     }
 
-    private Position getParticlePos(double time, Particle p) {
+    private Position getParticlePosByTime(double time, Particle p) {
         Position newPos = new Position(0, 0);
         newPos.setX(Mru.positionCalculation(p.getPosition().getX(), time, p.getVelocity().getxSpeed()));
         newPos.setY(Mru.positionCalculation(p.getPosition().getY(), time, p.getVelocity().getySpeed()));

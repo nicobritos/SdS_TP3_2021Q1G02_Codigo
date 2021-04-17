@@ -35,7 +35,5 @@ public class GasDiffusion {
         }
         Collections.sort(timeList);
         System.out.println(tcList);
-
-
     }
 }
