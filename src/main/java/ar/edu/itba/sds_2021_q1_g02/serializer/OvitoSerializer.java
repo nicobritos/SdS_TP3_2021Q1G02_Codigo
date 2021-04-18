@@ -1,17 +1,22 @@
 package ar.edu.itba.sds_2021_q1_g02.serializer;
 
+import ar.edu.itba.sds_2021_q1_g02.models.Dimen;
 import ar.edu.itba.sds_2021_q1_g02.models.Particle;
+import ar.edu.itba.sds_2021_q1_g02.models.Position;
+import ar.edu.itba.sds_2021_q1_g02.models.Velocity;
 
 import java.io.*;
 import java.util.List;
 
-public class FileSerializer implements Serializer {
+public class OvitoSerializer implements Serializer {
     private final ParticleFormatter particleFormatter;
     private final FileFormatter fileFormatter;
+    private final Dimen systemDimen;
 
-    public FileSerializer(ParticleFormatter particleFormatter, FileFormatter fileFormatter) {
+    public OvitoSerializer(ParticleFormatter particleFormatter, FileFormatter fileFormatter, Dimen systemDimen) {
         this.particleFormatter = particleFormatter;
         this.fileFormatter = fileFormatter;
+        this.systemDimen = systemDimen;
     }
 
     @Override
@@ -27,6 +32,10 @@ public class FileSerializer implements Serializer {
             FileWriter writer = new FileWriter(file);
 
             writer.write(this.fileFormatter.formatSystem(particles));
+            writer.write("\n");
+            writer.write(this.particleFormatter.format(new Particle(-2, 0, 0, new Position(this.systemDimen.getXvf(), this.systemDimen.getYvi()), new Velocity(0, 0)), step, dt));
+            writer.write("\n");
+            writer.write(this.particleFormatter.format(new Particle(-1, 0, 0, new Position(this.systemDimen.getXvi(), this.systemDimen.getYvf()), new Velocity(0, 0)), step, dt));
             writer.write("\n");
             for (Particle p : particles) {
                 writer.write(this.particleFormatter.format(p, step, dt));

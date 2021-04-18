@@ -6,7 +6,7 @@ import ar.edu.itba.sds_2021_q1_g02.models.Particle;
 import ar.edu.itba.sds_2021_q1_g02.parsers.CommandParser;
 import ar.edu.itba.sds_2021_q1_g02.parsers.ParticleParser;
 import ar.edu.itba.sds_2021_q1_g02.serializer.FileFormatter;
-import ar.edu.itba.sds_2021_q1_g02.serializer.FileSerializer;
+import ar.edu.itba.sds_2021_q1_g02.serializer.OvitoSerializer;
 import javafx.util.Pair;
 import org.apache.commons.cli.ParseException;
 
@@ -24,20 +24,29 @@ public class App {
         Dimen dimen = new Dimen(0, 0.24, 0, 0.09, 0.05);
         GasDiffusion GD = new GasDiffusion(particles.getKey(), dimen);
 
-        FileSerializer serializer = new FileSerializer(
+        OvitoSerializer serializer = new OvitoSerializer(
                 (particle, step, dt) -> {
-                    Color color = getParticleColor(particle, dimen);
                     // id (1), radius (1), pos (2), size (1), color (3, RGB)";
-                    return  particle.getId() + "\t" +
+                    String s = particle.getId() + "\t" +
                             particle.getRadius() + "\t" +
                             particle.getPosition().getX() + "\t" +
                             particle.getPosition().getY() + "\t" +
-                            particle.getMass() + "\t" +
-                            color.getRed() + "\t" +
-                            color.getGreen() + "\t" +
-                            color.getBlue() + "\t";
+                            particle.getMass() + "\t";
+
+                    if (particle.getRadius() > 0) {
+                        Color color = getParticleColor(particle, dimen);
+                        s += color.getRed() + "\t" +
+                             color.getGreen() + "\t" +
+                             color.getBlue() + "\t" +
+                             "0.0";
+                    } else {
+                        s += "0.0\t0.0\t0.0\t1.0";
+                    }
+
+                    return s;
                 },
-                new FileFormatterImpl()
+                new OvitoFileFormatter(),
+                dimen
         );
         GD.addSerializer(serializer);
 
@@ -55,7 +64,7 @@ public class App {
         }
     }
 
-    private static class FileFormatterImpl implements FileFormatter {
+    private static class OvitoFileFormatter implements FileFormatter {
         @Override
         public String formatFilename(int step) {
             return "output_" + step + ".xyz";
@@ -63,7 +72,7 @@ public class App {
 
         @Override
         public String formatSystem(Collection<Particle> particles) {
-            return particles.size() + "\n" + "Properties=id:R:1:radius:R:1:pos:R:2:mass:R:1:color:R:3";
+            return (particles.size() + 2) + "\n" + "Properties=id:R:1:radius:R:1:pos:R:2:mass:R:1:color:R:3:transparency:R:1";
         }
     }
 }
