@@ -22,14 +22,11 @@ public class GasDiffusion {
     }
 
     public void simulate(int maxIterations) {
-        int i = 0;
-
         this.serializeSystem();
         Step step = this.calculateFirstStep();
-        while (i < maxIterations) {
+        while (step.getStep() < maxIterations) {
             step = this.simulateStep(step);
-            this.serialize(i, step.getRelativeTime(), step.getAbsoluteTime());
-            i++;
+            this.serialize(step.getStep(), step.getRelativeTime(), step.getAbsoluteTime());
         }
     }
 
@@ -58,7 +55,7 @@ public class GasDiffusion {
         // Copiamos el mapa y no iteramos sobre el mismo set para no
         // eliminar el mismo evento mientras se itera
         for (Map.Entry<Double, Set<Event>> entry : previousStep.getNextEvents().entrySet()) {
-            newNextEvents.put(entry.getKey(), new TreeSet<>(entry.getValue()));
+            newNextEvents.put(entry.getKey(), new HashSet<>(entry.getValue()));
         }
 
         Set<Event> newNextEvent = newNextEvents.get(firstEvents.getKey());
@@ -109,7 +106,7 @@ public class GasDiffusion {
             }
         }
 
-        return new Step(newNextEvents, newParticleNextEvent, absoluteTime - previousStep.getAbsoluteTime(), absoluteTime);
+        return new Step(newNextEvents, newParticleNextEvent, absoluteTime - previousStep.getAbsoluteTime(), absoluteTime, previousStep.getStep() + 1);
     }
 
     private Step calculateFirstStep() {
@@ -141,7 +138,7 @@ public class GasDiffusion {
             }
         }
 
-        return new Step(nextEvents, particleNextEvent, 0, 0);
+        return new Step(nextEvents, particleNextEvent, 0, 0, 0);
     }
 
     private Event getEvent(Particle particle, double absoluteTime) {
@@ -175,12 +172,14 @@ public class GasDiffusion {
         private final Map<Particle, Event> particleNextEvent;
         private final double deltaTime;
         private final double absoluteTime;
+        private final int step;
 
-        public Step(TreeMap<Double, Set<Event>> nextEvents, Map<Particle, Event> particleNextEvent, double deltaTime, double absoluteTime) {
+        public Step(TreeMap<Double, Set<Event>> nextEvents, Map<Particle, Event> particleNextEvent, double deltaTime, double absoluteTime, int step) {
             this.nextEvents = nextEvents;
             this.particleNextEvent = particleNextEvent;
             this.deltaTime = deltaTime;
             this.absoluteTime = absoluteTime;
+            this.step = step;
         }
 
         public TreeMap<Double, Set<Event>> getNextEvents() {
@@ -197,6 +196,10 @@ public class GasDiffusion {
 
         public double getAbsoluteTime() {
             return this.absoluteTime;
+        }
+
+        public int getStep() {
+            return this.step;
         }
     }
 }
