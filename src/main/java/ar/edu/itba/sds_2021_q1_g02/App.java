@@ -63,7 +63,7 @@ public class App {
                     (stepParticles, step, dt, absoluteTime) -> {
                         return "** Step = " + step +
                                 " dT = " + String.format("%.5fs", dt) +
-                                " abs = " + String.format("%.5fs", dt);
+                                " abs = " + String.format("%.5fs", absoluteTime);
                     },
                     (particle, step, dt) -> {
                         return particle.getId() + " | " +
