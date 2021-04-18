@@ -22,30 +22,23 @@ public class GasDiffusion {
     }
 
     public void simulate(int maxIterations) {
-        int i = 0;
-        for (Particle p : this.particles) {
-            System.out.println("ParticleId:" + p.getId()+ ", ParticlePos:" + p.getPosition() + ", ParticleVel:" + p.getVelocity());
-        }
-        System.out.println("--------------------------------------------------------------------------");
+        this.serializeSystem();
         Step step = this.calculateFirstStep();
-        while (i < maxIterations) {
-            step = this.simulateStep(step.getNextEvents(), step.getParticleNextEvent());
-            for (Particle p : this.particles) {
-                System.out.println("ParticleId:" + p.getId()+ ", ParticlePos:" + p.getPosition() + ", ParticleVel:" + p.getVelocity());
-            }
-            System.out.println("--------------------------------------------------------------------------");
-            this.serialize(i, step.getMinTime());
-            i++;
+        while (step.getStep() < maxIterations) {
+            step = this.simulateStep(step);
+            this.serialize(step.getStep(), step.getRelativeTime(), step.getAbsoluteTime());
         }
     }
 
-
-    private Step simulateStep(TreeMap<Double, Set<Event>> nextEvents, Map<Particle, Event> particleNextEvent) {
-        Map.Entry<Double, Set<Event>> firstEvents = nextEvents.firstEntry();
+    private Step simulateStep(Step previousStep) {
+        Map.Entry<Double, Set<Event>> firstEvents = previousStep.getNextEvents().firstEntry();
         // Mover particulas a primer proximo evento
-        Equations.getInstance().evolveParticlesPositions(this.particles, firstEvents.getKey());
-        TreeMap<Double, Set<Event>> newNextEvents = new TreeMap<>(nextEvents);
-        Map<Particle, Event> newParticleNextEvent = new HashMap<>(particleNextEvent);
+        Equations.getInstance().evolveParticlesPositions(this.particles, firstEvents.getKey() - previousStep.getAbsoluteTime());
+
+        double absoluteTime = firstEvents.getKey();
+
+        TreeMap<Double, Set<Event>> newNextEvents = new TreeMap<>(previousStep.getNextEvents());
+        Map<Particle, Event> newParticleNextEvent = new HashMap<>(previousStep.getParticleNextEvent());
 
 
         for (Event event : firstEvents.getValue()) {
@@ -62,8 +55,8 @@ public class GasDiffusion {
 
         // Copiamos el mapa y no iteramos sobre el mismo set para no
         // eliminar el mismo evento mientras se itera
-        for (Map.Entry<Double, Set<Event>> entry : nextEvents.entrySet()) {
-            newNextEvents.put(entry.getKey(), new TreeSet<>(entry.getValue()));
+        for (Map.Entry<Double, Set<Event>> entry : previousStep.getNextEvents().entrySet()) {
+            newNextEvents.put(entry.getKey(), new HashSet<>(entry.getValue()));
         }
 
         Set<Event> newNextEvent = newNextEvents.get(firstEvents.getKey());
@@ -97,7 +90,7 @@ public class GasDiffusion {
             }
 
             // Recalculamos proximos eventos de las particulas colisionadas
-            Event newEvent = this.getEvent(event.getParticle());
+            Event newEvent = this.getEvent(event.getParticle(), absoluteTime);
             if (newEvent != null) {
                 newParticleNextEvent.put(newEvent.getParticle(), newEvent);
                 if (!newEvent.collidesWithWall())
@@ -106,7 +99,7 @@ public class GasDiffusion {
                 newNextEvents.computeIfAbsent(newEvent.getTime(), time -> new HashSet<>()).add(newEvent);
             }
             if (!event.collidesWithWall()) {
-                Event newOtherEvent = this.getEvent(event.getOtherParticle());
+                Event newOtherEvent = this.getEvent(event.getOtherParticle(), absoluteTime);
                 if (newOtherEvent != null && !newOtherEvent.equalsInverse(newEvent)) {
                     newParticleNextEvent.put(newOtherEvent.getParticle(), newOtherEvent);
                     newNextEvents.computeIfAbsent(newOtherEvent.getTime(), time -> new HashSet<>()).add(newOtherEvent);
@@ -114,7 +107,7 @@ public class GasDiffusion {
             }
         }
 
-        return new Step(newNextEvents, newParticleNextEvent, firstEvents.getKey());
+        return new Step(newNextEvents, newParticleNextEvent, absoluteTime - previousStep.getAbsoluteTime(), absoluteTime, previousStep.getStep() + 1);
     }
 
     private Step calculateFirstStep() {
@@ -123,7 +116,7 @@ public class GasDiffusion {
 
         // Put eventos
         for (Particle p : this.particles) {
-            Event event = this.getEvent(p);
+            Event event = this.getEvent(p, 0);
             if (event == null)
                 continue;
 
@@ -146,10 +139,10 @@ public class GasDiffusion {
             }
         }
 
-        return new Step(nextEvents, particleNextEvent, 0);
+        return new Step(nextEvents, particleNextEvent, 0, 0, 0);
     }
 
-    private Event getEvent(Particle particle) {
+    private Event getEvent(Particle particle, double absoluteTime) {
         Pair<Double, Direction> wallCollision = Equations.getInstance().collisionWall(particle, this.dimen);
         Pair<Double, Particle> particleCollision = Equations.getInstance().collisionParticles(particle, this.particles);
 
@@ -157,27 +150,37 @@ public class GasDiffusion {
             return null;
 
         if (wallCollision.getKey() < particleCollision.getKey()) {
-            return new Event(wallCollision.getKey(), particle, wallCollision.getValue());
+            return new Event(wallCollision.getKey() + absoluteTime, particle, wallCollision.getValue());
         } else {
-            return new Event(particleCollision.getKey(), particle, particleCollision.getValue());
+            return new Event(particleCollision.getKey() + absoluteTime, particle, particleCollision.getValue());
         }
     }
 
-    private void serialize(int step, double dt) {
+    private void serializeSystem() {
         for (Serializer serializer : this.serializers) {
-            serializer.serialize(this.particles, step, dt);
+            serializer.serializeSystem(this.particles, this.dimen);
+        }
+    }
+
+    private void serialize(int step, double dt, double absoluteTime) {
+        for (Serializer serializer : this.serializers) {
+            serializer.serialize(this.particles, step, dt, absoluteTime);
         }
     }
 
     private static class Step {
         private final TreeMap<Double, Set<Event>> nextEvents;
         private final Map<Particle, Event> particleNextEvent;
-        private final double minTime;
+        private final double deltaTime;
+        private final double absoluteTime;
+        private final int step;
 
-        public Step(TreeMap<Double, Set<Event>> nextEvents, Map<Particle, Event> particleNextEvent, double minTime) {
+        public Step(TreeMap<Double, Set<Event>> nextEvents, Map<Particle, Event> particleNextEvent, double deltaTime, double absoluteTime, int step) {
             this.nextEvents = nextEvents;
             this.particleNextEvent = particleNextEvent;
-            this.minTime = minTime;
+            this.deltaTime = deltaTime;
+            this.absoluteTime = absoluteTime;
+            this.step = step;
         }
 
         public TreeMap<Double, Set<Event>> getNextEvents() {
@@ -188,8 +191,16 @@ public class GasDiffusion {
             return this.particleNextEvent;
         }
 
-        public double getMinTime() {
-            return this.minTime;
+        public double getRelativeTime() {
+            return this.deltaTime;
+        }
+
+        public double getAbsoluteTime() {
+            return this.absoluteTime;
+        }
+
+        public int getStep() {
+            return this.step;
         }
     }
 }
