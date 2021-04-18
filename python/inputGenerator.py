@@ -24,8 +24,8 @@ def parse_args():
 
 def generate(file_path, percentage):
     input = open(file_path, "w")
-    w = 40  
-    h = 300
+    w = 40  #0.12  w= 0.12 / 0.0030
+    h = 30 #0.09   h=0.09/0.0030
     radius = 0.0015
     count = math.ceil(w * h * percentage)
     input.write(str(count))
