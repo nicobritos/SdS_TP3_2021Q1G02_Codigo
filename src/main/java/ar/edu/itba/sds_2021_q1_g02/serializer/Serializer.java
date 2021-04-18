@@ -9,5 +9,5 @@ import java.util.List;
 public interface Serializer {
     default void serializeSystem(Collection<Particle> particles, Dimen systemDimen) {}
 
-    void serialize(Collection<Particle> particles, int step, double dt);
+    void serialize(Collection<Particle> particles, int step, double dt, double absoluteTime);
 }

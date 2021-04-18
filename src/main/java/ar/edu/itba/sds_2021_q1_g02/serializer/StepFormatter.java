@@ -7,5 +7,5 @@ import java.util.Collection;
 
 @FunctionalInterface
 public interface StepFormatter {
-    String format(Collection<Particle> stepParticles, int step, double dt);
+    String format(Collection<Particle> stepParticles, int step, double dt, double absoluteTime);
 }

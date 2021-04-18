@@ -6,13 +6,11 @@ import ar.edu.itba.sds_2021_q1_g02.models.Particle;
 import ar.edu.itba.sds_2021_q1_g02.parsers.CommandParser;
 import ar.edu.itba.sds_2021_q1_g02.parsers.ParticleParser;
 import ar.edu.itba.sds_2021_q1_g02.serializer.ConsoleSerializer;
-import ar.edu.itba.sds_2021_q1_g02.serializer.FileFormatter;
 import ar.edu.itba.sds_2021_q1_g02.serializer.OvitoSerializer;
 import javafx.util.Pair;
 import org.apache.commons.cli.ParseException;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 
 public class App {
@@ -28,7 +26,7 @@ public class App {
         GasDiffusion GD = new GasDiffusion(particles.getKey(), dimen);
 
         GD.addSerializer(new OvitoSerializer(
-                (systemParticles, step, dt) -> (systemParticles.size() + 2) + "\n" + "Properties=id:R:1:radius:R:1:pos:R:2:mass:R:1:color:R:3:transparency:R:1",
+                (systemParticles, step, dt, abs) -> (systemParticles.size() + 2) + "\n" + "Properties=id:R:1:radius:R:1:pos:R:2:mass:R:1:color:R:3:transparency:R:1",
                 (particle, step, dt) -> {
                     // id (1), radius (1), pos (2), size (1), color (3, RGB)";
                     String s = particle.getId() + "\t" +
@@ -62,9 +60,10 @@ public class App {
                                 "m; Aperture X position = " + String.format("%.5f", systemDimen.getApertureX()) +
                                 "m";
                     },
-                    (stepParticles, step, dt) -> {
+                    (stepParticles, step, dt, absoluteTime) -> {
                         return "** Step = " + step +
-                                " dT = " + String.format("%.5fs", dt);
+                                " dT = " + String.format("%.5fs", dt) +
+                                " abs = " + String.format("%.5fs", dt);
                     },
                     (particle, step, dt) -> {
                         return particle.getId() + " | " +

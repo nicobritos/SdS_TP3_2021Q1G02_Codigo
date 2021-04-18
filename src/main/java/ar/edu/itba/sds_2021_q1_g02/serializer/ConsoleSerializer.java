@@ -23,8 +23,8 @@ public class ConsoleSerializer implements Serializer {
     }
 
     @Override
-    public void serialize(Collection<Particle> particles, int step, double dt) {
-        System.out.println(this.stepFormatter.format(particles, step, dt));
+    public void serialize(Collection<Particle> particles, int step, double dt, double absoluteTime) {
+        System.out.println(this.stepFormatter.format(particles, step, dt, absoluteTime));
         for (Particle p : particles) {
             System.out.println(this.particleFormatter.format(p, step, dt));
         }
