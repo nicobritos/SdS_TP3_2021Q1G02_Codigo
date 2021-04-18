@@ -68,7 +68,7 @@ public class App {
                     (particle, step, dt) -> {
                         return particle.getId() + " | " +
                                 String.format("(%.5f, %.5f)m", particle.getPosition().getX(), particle.getPosition().getY()) + " | " +
-                                String.format("(%.5f, %.5f)m", particle.getVelocity().getxSpeed(), particle.getVelocity().getySpeed());
+                                String.format("(%.5f, %.5f)m/s", particle.getVelocity().getxSpeed(), particle.getVelocity().getySpeed());
                     }
             ));
         }
