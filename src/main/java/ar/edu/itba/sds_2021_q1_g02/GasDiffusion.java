@@ -44,9 +44,12 @@ public class GasDiffusion {
         for (Event event : firstEvents.getValue()) {
             // Colisionar
             if (event.collidesWithWall()) {
-                Equations.getInstance().evolveParticleVelocity(event.getParticle(), event.getWallDirection());
+                Velocity newVelocity = Equations.getInstance().evolveParticleVelocity(event.getParticle(), event.getWallDirection());
+                event.getParticle().setVelocity(newVelocity);
             } else {
-                Equations.getInstance().evolveParticlesVelocities(event.getParticle(), event.getOtherParticle());
+                Pair<Velocity, Velocity> velocities = Equations.getInstance().evolveParticlesVelocities(event.getParticle(), event.getOtherParticle());
+                event.getParticle().setVelocity(velocities.getKey());
+                event.getOtherParticle().setVelocity(velocities.getValue());
             }
         }
 

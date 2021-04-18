@@ -63,7 +63,7 @@ public class App {
 
         @Override
         public String formatSystem(Collection<Particle> particles) {
-            return particles.size() + "\n" + "Properties=id:R:1:radius:R:1:pos:R:2:size:R:1:color:R:3";
+            return particles.size() + "\n" + "Properties=id:R:1:radius:R:1:pos:R:2:mass:R:1:color:R:3";
         }
     }
 }

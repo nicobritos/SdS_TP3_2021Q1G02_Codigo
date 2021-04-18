@@ -89,15 +89,13 @@ public final class Equations {
                 new Velocity(p.getVelocity().getxSpeed(), -p.getVelocity().getySpeed());
     }
 
-    public List<Velocity> evolveParticlesVelocities(Particle p1, Particle p2) {
+    public Pair<Velocity, Velocity> evolveParticlesVelocities(Particle p1, Particle p2) {
         Velocity v1d = new Velocity(p1.getVelocity().getxSpeed() + (this.Jx(p1, p2) / p1.getMass()),
                 p1.getVelocity().getySpeed() + (this.Jy(p1, p2) / p1.getMass()));
         Velocity v2d = new Velocity(p2.getVelocity().getxSpeed() - (this.Jx(p1, p2) / p2.getMass()),
                 p2.getVelocity().getySpeed() - (this.Jy(p1, p2) / p2.getMass()));
-        List<Velocity> v = new ArrayList<>();
-        v.add(v1d);
-        v.add(v2d);
-        return v;
+
+        return new Pair<>(v1d, v2d);
     }
 
     public Double goThroughApertureTime(Particle p, Dimen systemDimens) {

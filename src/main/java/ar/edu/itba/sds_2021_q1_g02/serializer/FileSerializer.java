@@ -24,14 +24,16 @@ public class FileSerializer implements Serializer {
             if (!file.createNewFile())
                 throw new RuntimeException("Couldn't create file: " + file.getName());
 
-            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
+            FileWriter writer = new FileWriter(file);
 
-            bufferedWriter.write(this.fileFormatter.formatSystem(particles));
-            bufferedWriter.write("\n");
+            writer.write(this.fileFormatter.formatSystem(particles));
+            writer.write("\n");
             for (Particle p : particles) {
-                bufferedWriter.write(this.particleFormatter.format(p, step, dt));
-                bufferedWriter.write("\n");
+                writer.write(this.particleFormatter.format(p, step, dt));
+                writer.write("\n");
             }
+
+            writer.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
