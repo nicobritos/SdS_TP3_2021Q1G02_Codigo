@@ -23,10 +23,17 @@ public class GasDiffusion {
 
     public void simulate(int maxIterations) {
         int i = 0;
-
+        for (Particle p : this.particles) {
+            System.out.println("ParticleId:" + p.getId()+ ", ParticlePos:" + p.getPosition() + ", ParticleVel:" + p.getVelocity());
+        }
+        System.out.println("--------------------------------------------------------------------------");
         Step step = this.calculateFirstStep();
         while (i < maxIterations) {
             step = this.simulateStep(step.getNextEvents(), step.getParticleNextEvent());
+            for (Particle p : this.particles) {
+                System.out.println("ParticleId:" + p.getId()+ ", ParticlePos:" + p.getPosition() + ", ParticleVel:" + p.getVelocity());
+            }
+            System.out.println("--------------------------------------------------------------------------");
             this.serialize(i, step.getMinTime());
             i++;
         }
@@ -37,9 +44,9 @@ public class GasDiffusion {
         Map.Entry<Double, Set<Event>> firstEvents = nextEvents.firstEntry();
         // Mover particulas a primer proximo evento
         Equations.getInstance().evolveParticlesPositions(this.particles, firstEvents.getKey());
-
         TreeMap<Double, Set<Event>> newNextEvents = new TreeMap<>(nextEvents);
         Map<Particle, Event> newParticleNextEvent = new HashMap<>(particleNextEvent);
+
 
         for (Event event : firstEvents.getValue()) {
             // Colisionar
