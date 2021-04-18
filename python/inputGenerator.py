@@ -33,9 +33,7 @@ def generate(file_path, percentage):
     present = {}
 
     while len(present) < count:
-        print(str(len(present)))
         present[str(randrange(w)) +"_"+ str(randrange(h))] = True
-    print(present)
 
     for y in range(h):
         for x in range(w):
