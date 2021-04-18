@@ -24,6 +24,7 @@ public class GasDiffusion {
     public void simulate(int maxIterations) {
         int i = 0;
 
+        this.serializeSystem();
         Step step = this.calculateFirstStep();
         while (i < maxIterations) {
             step = this.simulateStep(step.getNextEvents(), step.getParticleNextEvent());
@@ -156,9 +157,15 @@ public class GasDiffusion {
         }
     }
 
+    private void serializeSystem() {
+        for (Serializer serializer : this.serializers) {
+            serializer.serializeSystem(this.particles, this.dimen);
+        }
+    }
+
     private void serialize(int step, double dt) {
         for (Serializer serializer : this.serializers) {
-            serializer.serialize(this.particles, step, dt, this.dimen);
+            serializer.serialize(this.particles, step, dt);
         }
     }
 

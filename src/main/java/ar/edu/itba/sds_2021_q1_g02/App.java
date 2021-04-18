@@ -28,7 +28,7 @@ public class App {
         GasDiffusion GD = new GasDiffusion(particles.getKey(), dimen);
 
         GD.addSerializer(new OvitoSerializer(
-                (systemParticles, systemDimen, step, dt) -> (systemParticles.size() + 2) + "\n" + "Properties=id:R:1:radius:R:1:pos:R:2:mass:R:1:color:R:3:transparency:R:1",
+                (systemParticles, step, dt) -> (systemParticles.size() + 2) + "\n" + "Properties=id:R:1:radius:R:1:pos:R:2:mass:R:1:color:R:3:transparency:R:1",
                 (particle, step, dt) -> {
                     // id (1), radius (1), pos (2), size (1), color (3, RGB)";
                     String s = particle.getId() + "\t" +
@@ -55,14 +55,16 @@ public class App {
 
         if (particles.getKey().size() < CONSOLE_SERIALIZER_LIMIT) {
             GD.addSerializer(new ConsoleSerializer(
-                    (systemParticles, systemDimen, step, dt) -> {
-                        return "** Step = " + step +
-                                " dT = " + String.format("%.5f", dt) +
-                                "s; Height = " + String.format("%.5f", systemDimen.getYvf() - systemDimen.getYvi()) +
+                    (systemParticles, systemDimen) -> {
+                        return  "Height = " + String.format("%.5f", systemDimen.getYvf() - systemDimen.getYvi()) +
                                 "m; Width = " + String.format("%.5f", systemDimen.getXvf() - systemDimen.getXvi()) +
                                 "m; Aperture size = " + String.format("%.5f", systemDimen.getApertureYvf() - systemDimen.getApertureYvi()) +
                                 "m; Aperture X position = " + String.format("%.5f", systemDimen.getApertureX()) +
                                 "m";
+                    },
+                    (stepParticles, step, dt) -> {
+                        return "** Step = " + step +
+                                " dT = " + String.format("%.5f", dt);
                     },
                     (particle, step, dt) -> {
                         return particle.getId() + " | " +

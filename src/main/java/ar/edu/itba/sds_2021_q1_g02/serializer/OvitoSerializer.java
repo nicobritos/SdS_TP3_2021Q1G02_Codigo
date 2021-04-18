@@ -6,23 +6,24 @@ import ar.edu.itba.sds_2021_q1_g02.models.Position;
 import ar.edu.itba.sds_2021_q1_g02.models.Velocity;
 
 import java.io.*;
+import java.util.Collection;
 import java.util.List;
 
 public class OvitoSerializer implements Serializer {
-    private final SystemFormatter systemFormatter;
+    private final StepFormatter stepFormatter;
     private final ParticleFormatter particleFormatter;
     private final FileFormatter fileFormatter;
     private final Dimen systemDimen;
 
-    public OvitoSerializer(SystemFormatter systemFormatter, ParticleFormatter particleFormatter, FileFormatter fileFormatter, Dimen systemDimen) {
-        this.systemFormatter = systemFormatter;
+    public OvitoSerializer(StepFormatter stepFormatter, ParticleFormatter particleFormatter, FileFormatter fileFormatter, Dimen systemDimen) {
+        this.stepFormatter = stepFormatter;
         this.particleFormatter = particleFormatter;
         this.fileFormatter = fileFormatter;
         this.systemDimen = systemDimen;
     }
 
     @Override
-    public void serialize(List<Particle> particles, int step, double dt, Dimen systemDimen) {
+    public void serialize(Collection<Particle> particles, int step, double dt) {
         File file = new File(this.fileFormatter.formatFilename(step));
         if (file.exists() && !file.delete())
             throw new RuntimeException("Couldn't delete file: " + file.getName());
@@ -33,7 +34,7 @@ public class OvitoSerializer implements Serializer {
 
             FileWriter writer = new FileWriter(file);
 
-            writer.write(this.systemFormatter.format(particles, systemDimen, step, dt));
+            writer.write(this.stepFormatter.format(particles, step, dt));
             writer.write("\n");
             writer.write(this.particleFormatter.format(new Particle(-2, 0, 0, new Position(this.systemDimen.getXvf(), this.systemDimen.getYvi()), new Velocity(0, 0)), step, dt));
             writer.write("\n");
