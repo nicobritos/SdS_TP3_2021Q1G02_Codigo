@@ -134,8 +134,18 @@ public final class Equations {
         return tcAux;
     }
 
-    private double collisionTimeWithWall(double iWall, double fWall, double partPos, double partRadius,
-                                         double partSpeed) {
+    public Pair<Double, Double> getparticleProportion(Collection<Particle> particles, Dimen systemDimens){
+        double left = 0;
+        double size = particles.size();
+        for(Particle particle: particles){
+            if(particle.getPosition().getX() <= systemDimens.getApertureX()){
+                left +=1;
+            }
+        }
+        return new Pair<Double,Double>(left/size,(size-left)/size);
+    }
+
+    private double collisionTimeWithWall(double iWall, double fWall, double partPos, double partRadius, double partSpeed) {
         double tc;
         if (partSpeed > 0) {
             tc = Mru.timeCalculation(partPos, fWall - partRadius, partSpeed);
