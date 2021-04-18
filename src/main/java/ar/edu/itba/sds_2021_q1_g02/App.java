@@ -58,10 +58,10 @@ public class App {
                     (systemParticles, systemDimen, step, dt) -> {
                         return "** Step = " + step +
                                 " dT = " + String.format("%.5f", dt) +
-                                "s; Height = " + (systemDimen.getYvf() - systemDimen.getYvi()) +
-                                "m; Width = " + (systemDimen.getXvf() - systemDimen.getXvi()) +
-                                "m; Aperture size = " + (systemDimen.getApertureYvf() - systemDimen.getApertureYvi()) +
-                                "m; Aperture X position = " + (systemDimen.getApertureX()) +
+                                "s; Height = " + String.format("%.5f", systemDimen.getYvf() - systemDimen.getYvi()) +
+                                "m; Width = " + String.format("%.5f", systemDimen.getXvf() - systemDimen.getXvi()) +
+                                "m; Aperture size = " + String.format("%.5f", systemDimen.getApertureYvf() - systemDimen.getApertureYvi()) +
+                                "m; Aperture X position = " + String.format("%.5f", systemDimen.getApertureX()) +
                                 "m";
                     },
                     (particle, step, dt) -> {
