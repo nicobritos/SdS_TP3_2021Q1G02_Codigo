@@ -9,18 +9,20 @@ import java.io.*;
 import java.util.List;
 
 public class OvitoSerializer implements Serializer {
+    private final SystemFormatter systemFormatter;
     private final ParticleFormatter particleFormatter;
     private final FileFormatter fileFormatter;
     private final Dimen systemDimen;
 
-    public OvitoSerializer(ParticleFormatter particleFormatter, FileFormatter fileFormatter, Dimen systemDimen) {
+    public OvitoSerializer(SystemFormatter systemFormatter, ParticleFormatter particleFormatter, FileFormatter fileFormatter, Dimen systemDimen) {
+        this.systemFormatter = systemFormatter;
         this.particleFormatter = particleFormatter;
         this.fileFormatter = fileFormatter;
         this.systemDimen = systemDimen;
     }
 
     @Override
-    public void serialize(List<Particle> particles, int step, double dt) {
+    public void serialize(List<Particle> particles, int step, double dt, Dimen systemDimen) {
         File file = new File(this.fileFormatter.formatFilename(step));
         if (file.exists() && !file.delete())
             throw new RuntimeException("Couldn't delete file: " + file.getName());
@@ -31,7 +33,7 @@ public class OvitoSerializer implements Serializer {
 
             FileWriter writer = new FileWriter(file);
 
-            writer.write(this.fileFormatter.formatSystem(particles));
+            writer.write(this.systemFormatter.format(particles, systemDimen, step, dt));
             writer.write("\n");
             writer.write(this.particleFormatter.format(new Particle(-2, 0, 0, new Position(this.systemDimen.getXvf(), this.systemDimen.getYvi()), new Velocity(0, 0)), step, dt));
             writer.write("\n");

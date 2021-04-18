@@ -158,7 +158,7 @@ public class GasDiffusion {
 
     private void serialize(int step, double dt) {
         for (Serializer serializer : this.serializers) {
-            serializer.serialize(this.particles, step, dt);
+            serializer.serialize(this.particles, step, dt, this.dimen);
         }
     }
 
