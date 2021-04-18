@@ -63,4 +63,17 @@ public class Event implements Comparable<Event> {
     public int hashCode() {
         return Objects.hash(this.getTime(), this.getParticle(), this.getOtherParticle(), this.getWallDirection());
     }
+
+    public boolean equalsInverse(Event other) {
+        if (this.equals(other))
+            return true;
+
+        if (this.collidesWithWall() != other.collidesWithWall())
+            return false;
+
+        return (this.time == other.time &&
+                this.collidesWithWall() ||
+                (this.getParticle().equals(other.getOtherParticle()) && this.getOtherParticle().equals(this.getParticle()))
+        );
+    }
 }

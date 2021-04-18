@@ -63,34 +63,47 @@ public class GasDiffusion {
         for (Event event : firstEvents.getValue()) {
             // El evento ya paso
             newNextEvent.remove(event);
+            if (newNextEvent.isEmpty())
+                newNextEvents.remove(event.getTime());
 
             // Tengo que buscar proximos eventos con las particulas que
             // interactuaron en la colision y eliminarlos
             Event particleEvent = newParticleNextEvent.get(event.getParticle());
             newParticleNextEvent.remove(event.getParticle());
             Set<Event> particleEvents = newNextEvents.get(particleEvent.getTime());
-            if (particleEvents != null)
+            if (particleEvents != null) {
                 particleEvents.remove(particleEvent);
+                if (particleEvents.isEmpty())
+                    newNextEvents.remove(particleEvent.getTime());
+            }
+
             if (!event.collidesWithWall()) {
                 Event otherParticleEvent = newParticleNextEvent.get(event.getOtherParticle());
                 newParticleNextEvent.remove(event.getOtherParticle());
                 Set<Event> otherParticleEvents = newNextEvents.get(otherParticleEvent.getTime());
-                if (otherParticleEvents != null)
+                if (otherParticleEvents != null) {
                     otherParticleEvents.remove(particleEvent);
-
-                // Recalculamos proximos eventos de las particulas colisionadas
-                Event newOtherEvent = this.getEvent(event.getOtherParticle());
-                if (newOtherEvent != null) {
-                    newParticleNextEvent.put(event.getOtherParticle(), newOtherEvent);
-                    newNextEvents.computeIfAbsent(event.getTime(), time -> new HashSet<>()).add(newOtherEvent);
+                    if (otherParticleEvents.isEmpty()) {
+                        newNextEvents.remove(otherParticleEvent.getTime());
+                    }
                 }
             }
 
             // Recalculamos proximos eventos de las particulas colisionadas
             Event newEvent = this.getEvent(event.getParticle());
             if (newEvent != null) {
-                newParticleNextEvent.put(event.getParticle(), newEvent);
-                newNextEvents.computeIfAbsent(event.getTime(), time -> new HashSet<>()).add(newEvent);
+                newParticleNextEvent.put(newEvent.getParticle(), newEvent);
+                if (!newEvent.collidesWithWall())
+                    newParticleNextEvent.put(newEvent.getOtherParticle(), newEvent);
+
+                newNextEvents.computeIfAbsent(newEvent.getTime(), time -> new HashSet<>()).add(newEvent);
+            }
+            if (!event.collidesWithWall()) {
+                Event newOtherEvent = this.getEvent(event.getOtherParticle());
+                if (newOtherEvent != null && !newOtherEvent.equalsInverse(newEvent)) {
+                    newParticleNextEvent.put(newOtherEvent.getParticle(), newOtherEvent);
+                    newNextEvents.computeIfAbsent(newOtherEvent.getTime(), time -> new HashSet<>()).add(newOtherEvent);
+                }
             }
         }
 
@@ -107,7 +120,19 @@ public class GasDiffusion {
             if (event == null)
                 continue;
 
-            nextEvents.computeIfAbsent(event.getTime(), time -> new HashSet<>()).add(event);
+            if (!event.collidesWithWall()) {
+                Set<Event> setEvents = nextEvents.get(event.getTime());
+                if (setEvents != null) {
+                    if (!setEvents.contains(new Event(event.getTime(), event.getOtherParticle(), event.getParticle()))) {
+                        setEvents.add(event);
+                    }
+                } else {
+                    nextEvents.computeIfAbsent(event.getTime(), time -> new HashSet<>()).add(event);
+                }
+            } else {
+                nextEvents.computeIfAbsent(event.getTime(), time -> new HashSet<>()).add(event);
+            }
+
             particleNextEvent.put(event.getParticle(), event);
             if (!event.collidesWithWall()) {
                 particleNextEvent.put(event.getOtherParticle(), event);
