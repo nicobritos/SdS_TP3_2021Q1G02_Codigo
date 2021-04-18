@@ -33,11 +33,13 @@ def generate(file_path, percentage):
     present = {}
 
     while len(present) < count:
-        present[str(round(randrange(w),4)) + str(round(randrange(h), 4))] = True
+        print(str(len(present)))
+        present[str(randrange(w)) +"_"+ str(randrange(h))] = True
+    print(present)
 
     for y in range(h):
         for x in range(w):
-            if str(x)+str(y) in present:
+            if str(x)+"_"+str(y) in present:
                 # radius
                 input.write(str(radius))
                 input.write('\t')
