@@ -42,16 +42,9 @@ public final class Equations {
         }
 
         // collision with intermediate walls (vertical)
-        if (p.getVelocity().getxSpeed() > 0 && p.getPosition().getX() < systemDimens.getApertureX()) {
-            tcAux1 = Mru.timeCalculation(x0, systemDimens.getApertureX() - p.getRadius(), p.getVelocity().getxSpeed());
-            if (this.getParticlePosByTime(tcAux1, p).getX() < systemDimens.getApertureYvi() || this.getParticlePosByTime(tcAux1, p).getX() > systemDimens.getApertureYvf()) {
-                tcAux = tcAux1;
-            }
-        } else if (p.getVelocity().getxSpeed() < 0 && p.getPosition().getX() > systemDimens.getApertureX()) {
-            tcAux1 = Mru.timeCalculation(x0, systemDimens.getApertureX() + p.getRadius(), p.getVelocity().getxSpeed());
-            if (this.getParticlePosByTime(tcAux1, p).getX() < systemDimens.getApertureYvi() || this.getParticlePosByTime(tcAux1, p).getX() > systemDimens.getApertureYvf()) {
-                tcAux = tcAux1;
-            }
+        tcAux1 = this.collisionTimeWithIntermediateWall(p, systemDimens);
+        if (tcAux1 != Double.POSITIVE_INFINITY) {
+            tcAux = tcAux1;
         }
 
         // compare vertical and horizontal time collision and keep the MIN
@@ -121,6 +114,28 @@ public final class Equations {
                         tc : Double.POSITIVE_INFINITY : tc;
     }
 
+    public double collisionTimeWithIntermediateWall(Particle p, Dimen systemDimens) {
+        double tcAux = Double.POSITIVE_INFINITY, tcAux1;
+
+        if (p.getVelocity().getxSpeed() > 0 && p.getPosition().getX() < systemDimens.getApertureX()) {
+            tcAux1 = Mru.timeCalculation(p.getPosition().getX(), systemDimens.getApertureX() - p.getRadius(),
+                    p.getVelocity().getxSpeed());
+
+            if (this.getParticlePosByTime(tcAux1, p).getY() < systemDimens.getApertureYvi() || this.getParticlePosByTime(tcAux1, p).getY() > systemDimens.getApertureYvf()) {
+                tcAux = tcAux1;
+            }
+        } else if (p.getVelocity().getxSpeed() < 0 && p.getPosition().getX() > systemDimens.getApertureX()) {
+            tcAux1 = Mru.timeCalculation(p.getPosition().getX(), systemDimens.getApertureX() + p.getRadius(),
+                    p.getVelocity().getxSpeed());
+
+            if (this.getParticlePosByTime(tcAux1, p).getY() < systemDimens.getApertureYvi() || this.getParticlePosByTime(tcAux1, p).getY() > systemDimens.getApertureYvf()) {
+                tcAux = tcAux1;
+            }
+        }
+
+        return tcAux;
+    }
+
     private double collisionTimeWithWall(double iWall, double fWall, double partPos, double partRadius,
                                          double partSpeed) {
         double tc;
@@ -157,7 +172,7 @@ public final class Equations {
     }
 
     private double deltaVTimesdeltaV(Particle p1, Particle p2) {
-        return this.xyOverlap(p1, p2);
+        return Math.pow(this.deltaVx(p1, p2), 2) + Math.pow(this.deltaVy(p1, p2), 2);
     }
 
     private double deltaVTimesdeltaR(Particle p1, Particle p2) {
