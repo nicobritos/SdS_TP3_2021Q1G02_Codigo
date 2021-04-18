@@ -16,7 +16,8 @@ public final class Equations {
         return instance;
     }
 
-    private Equations() {}
+    private Equations() {
+    }
 
     // returns the min time that it will collide with a wall
     public Pair<Double, Direction> collisionWall(Particle p, Dimen systemDimens) {
@@ -43,13 +44,12 @@ public final class Equations {
         // collision with intermediate walls (vertical)
         if (p.getVelocity().getxSpeed() > 0 && p.getPosition().getX() < systemDimens.getApertureX()) {
             tcAux1 = Mru.timeCalculation(x0, systemDimens.getApertureX() - p.getRadius(), p.getVelocity().getxSpeed());
-            if (this.getParticlePosByTime(tcAux1, p).getX() < systemDimens.getApertureYvi() || this.getParticlePosByTime(tcAux1,
-                    p).getX() > systemDimens.getApertureYvf()) {
+            if (this.getParticlePosByTime(tcAux1, p).getX() < systemDimens.getApertureYvi() || this.getParticlePosByTime(tcAux1, p).getX() > systemDimens.getApertureYvf()) {
                 tcAux = tcAux1;
             }
         } else if (p.getVelocity().getxSpeed() < 0 && p.getPosition().getX() > systemDimens.getApertureX()) {
             tcAux1 = Mru.timeCalculation(x0, systemDimens.getApertureX() + p.getRadius(), p.getVelocity().getxSpeed());
-            if (this.getParticlePosByTime(tcAux1, p).getX() < 0.4 || this.getParticlePosByTime(tcAux1, p).getX() > 0.5) {
+            if (this.getParticlePosByTime(tcAux1, p).getX() < systemDimens.getApertureYvi() || this.getParticlePosByTime(tcAux1, p).getX() > systemDimens.getApertureYvf()) {
                 tcAux = tcAux1;
             }
         }
@@ -90,8 +90,9 @@ public final class Equations {
         return particles;
     }
 
-    public Velocity EvolveParticleVelocity(Particle p, boolean vertical) {
-        return vertical ? new Velocity(-p.getVelocity().getxSpeed(), p.getVelocity().getySpeed()) :
+    public Velocity evolveParticleVelocity(Particle p, Direction direction) {
+        return direction.equals(Direction.VERTICAL) ? new Velocity(-p.getVelocity().getxSpeed(),
+                p.getVelocity().getySpeed()) :
                 new Velocity(p.getVelocity().getxSpeed(), -p.getVelocity().getySpeed());
     }
 
@@ -104,6 +105,20 @@ public final class Equations {
         v.add(v1d);
         v.add(v2d);
         return v;
+    }
+
+    public Double goThroughApertureTime(Particle p, Dimen systemDimens) {
+        double tc = Double.POSITIVE_INFINITY;
+        double x0 = p.getPosition().getX();
+        if (p.getVelocity().getxSpeed() > 0 && x0 < systemDimens.getApertureX()) {
+            tc = Mru.timeCalculation(x0, systemDimens.getApertureX() - p.getRadius(), p.getVelocity().getxSpeed());
+        } else if (p.getVelocity().getxSpeed() < 0 && p.getPosition().getX() > systemDimens.getApertureX()) {
+            tc = Mru.timeCalculation(x0, systemDimens.getApertureX() + p.getRadius(), p.getVelocity().getxSpeed());
+        }
+
+        return tc != Double.POSITIVE_INFINITY ?
+                (this.getParticlePosByTime(tc, p).getX() >= 0.4 && this.getParticlePosByTime(tc, p).getX() <= 0.5) ?
+                        tc : Double.POSITIVE_INFINITY : tc;
     }
 
     private double collisionTimeWithWall(double iWall, double fWall, double partPos, double partRadius,

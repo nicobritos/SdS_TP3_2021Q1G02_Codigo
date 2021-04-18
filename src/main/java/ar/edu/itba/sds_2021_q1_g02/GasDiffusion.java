@@ -30,11 +30,15 @@ public class GasDiffusion {
         double minStepTime = Double.POSITIVE_INFINITY;
         List<Pair<Particle, Direction>> wallCollisions = new LinkedList<>();
         List<Pair<Particle, Particle>> particleCollisions = new LinkedList<>();
+        List<Pair<Particle, Double>> particlesThroughAperture = new LinkedList<>();
 
         for (Particle p : this.particles) {
             Pair<Double, Direction> wallCollision = Equations.getInstance().collisionWall(p, this.dimen);
             Pair<Double, Particle> particleCollision = Equations.getInstance().collisionParticles(p, this.particles);
-
+            Double particleThroughAperture = Equations.getInstance().goThroughApertureTime(p, this.dimen);
+            if (particleThroughAperture != Double.POSITIVE_INFINITY) {
+                particlesThroughAperture.add(new Pair<>(p, particleThroughAperture));
+            }
             // If a wall collision happens before a particle collision
             if (wallCollision.getKey() < particleCollision.getKey()) {
                 // If the wall collision happens before the first collision in the system
@@ -76,10 +80,12 @@ public class GasDiffusion {
         Equations.getInstance().evolveParticlesPositions(this.particles, minStepTime);
 
         wallCollisions.forEach(particleDirectionPair -> {
-            Equations.getInstance().evolveParticleVelocities(particleDirectionPair.getKey(), particleDirectionPair.getValue());
+            Equations.getInstance().evolveParticleVelocity(particleDirectionPair.getKey(),
+                    particleDirectionPair.getValue());
         });
         particleCollisions.forEach(particleParticlePair -> {
-            Equations.getInstance().evolveParticlesVelocities(particleParticlePair.getKey(), particleParticlePair.getValue());
+            Equations.getInstance().evolveParticlesVelocities(particleParticlePair.getKey(),
+                    particleParticlePair.getValue());
         });
     }
 }
