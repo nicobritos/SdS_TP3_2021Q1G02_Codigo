@@ -40,6 +40,7 @@ public class GasDiffusion {
         TreeMap<Double, Set<Event>> newNextEvents = new TreeMap<>(previousStep.getNextEvents());
         Map<Particle, Event> newParticleNextEvent = new HashMap<>(previousStep.getParticleNextEvent());
 
+
         for (Event event : firstEvents.getValue()) {
             // Colisionar
             if (event.collidesWithWall()) {

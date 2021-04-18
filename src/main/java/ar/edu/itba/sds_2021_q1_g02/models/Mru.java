@@ -6,6 +6,6 @@ public class Mru {
     }
 
     public static double positionCalculation(double initPos, double time, double speed) {
-        return initPos + time * speed;
+        return initPos + (time * speed);
     }
 }

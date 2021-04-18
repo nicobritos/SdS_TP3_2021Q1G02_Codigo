@@ -29,7 +29,7 @@ public class Position {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(" [").append((int) this.x).append(",").append((int) this.y).append("] ");
+        sb.append(" [").append(this.x).append(",").append(this.y).append("] ");
         return sb.toString();
     }
 }

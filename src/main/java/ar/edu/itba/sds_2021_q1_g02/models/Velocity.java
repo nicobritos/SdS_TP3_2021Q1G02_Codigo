@@ -20,4 +20,11 @@ public class Velocity {
     public Velocity copy() {
         return new Velocity(this.xSpeed, this.ySpeed);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(" [").append(this.xSpeed).append(",").append(this.ySpeed).append("] ");
+        return sb.toString();
+    }
 }
