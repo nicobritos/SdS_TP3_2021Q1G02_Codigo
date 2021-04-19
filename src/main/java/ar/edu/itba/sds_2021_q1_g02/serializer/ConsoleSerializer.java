@@ -4,7 +4,6 @@ import ar.edu.itba.sds_2021_q1_g02.models.Dimen;
 import ar.edu.itba.sds_2021_q1_g02.models.Particle;
 
 import java.util.Collection;
-import java.util.List;
 
 public class ConsoleSerializer implements Serializer {
     private static final int CONSOLE_SERIALIZER_LIMIT = 50;

@@ -31,17 +31,17 @@ public class GasDiffusion {
     }
 
     private Step simulateStep(Step previousStep) {
-        Map.Entry<Double, Set<Event>> firstEvents = previousStep.getNextEvents().firstEntry();
+        Map.Entry<Double, Set<Event>> firstEvents = previousStep.getFirstEvents();
         double absoluteTime = firstEvents.getKey();
 
         // Mover particulas a primer proximo evento
         Equations.getInstance().evolveParticlesPositions(this.particles, absoluteTime - previousStep.getAbsoluteTime());
 
         TreeMap<Double, Set<Event>> newNextEvents = new TreeMap<>(previousStep.getNextEvents());
-        Map<Particle, Event> newParticleNextEvent = new HashMap<>(previousStep.getParticleNextEvent());
 
         for (Event event : firstEvents.getValue()) {
             // Colisionar
+            event.getParticle().increaseCollision();
             if (event.collidesWithWall()) {
                 Velocity newVelocity = Equations.getInstance().evolveParticleVelocity(event.getParticle(), event.getWallDirection());
                 event.getParticle().setVelocity(newVelocity);
@@ -49,6 +49,7 @@ public class GasDiffusion {
                 Pair<Velocity, Velocity> velocities = Equations.getInstance().evolveParticlesVelocities(event.getParticle(), event.getOtherParticle());
                 event.getParticle().setVelocity(velocities.getKey());
                 event.getOtherParticle().setVelocity(velocities.getValue());
+                event.getOtherParticle().increaseCollision();
             }
         }
 
@@ -66,52 +67,24 @@ public class GasDiffusion {
             if (newNextEvent.isEmpty())
                 newNextEvents.remove(event.getTime());
 
-            // Tengo que buscar proximos eventos con las particulas que
-            // interactuaron en la colision y eliminarlos
-            Event particleEvent = newParticleNextEvent.get(event.getParticle());
-            newParticleNextEvent.remove(event.getParticle());
-            Set<Event> particleEvents = newNextEvents.get(particleEvent.getTime());
-            if (particleEvents != null) {
-                particleEvents.remove(particleEvent);
-                particleEvents.remove(particleEvent.getInverse());
-                if (particleEvents.isEmpty())
-                    newNextEvents.remove(particleEvent.getTime());
-            }
-
-            if (!event.collidesWithWall()) {
-                Event otherParticleEvent = newParticleNextEvent.get(event.getOtherParticle());
-                newParticleNextEvent.remove(event.getOtherParticle());
-                Set<Event> otherParticleEvents = newNextEvents.get(otherParticleEvent.getTime());
-                if (otherParticleEvents != null) {
-                    otherParticleEvents.remove(otherParticleEvent);
-                    otherParticleEvents.remove(otherParticleEvent.getInverse());
-                    if (otherParticleEvents.isEmpty()) {
-                        newNextEvents.remove(otherParticleEvent.getTime());
-                    }
-                }
-            }
-
             // Recalculamos proximos eventos de las particulas colisionadas
             Event newEvent = this.getEvent(event.getParticle(), absoluteTime);
             if (newEvent != null) {
-                newParticleNextEvent.put(newEvent.getParticle(), newEvent);
                 newNextEvents.computeIfAbsent(newEvent.getTime(), time -> new HashSet<>()).add(newEvent);
             }
             if (!event.collidesWithWall()) {
                 Event newOtherEvent = this.getEvent(event.getOtherParticle(), absoluteTime);
                 if (newOtherEvent != null && !newOtherEvent.equalsInverse(newEvent)) {
-                    newParticleNextEvent.put(newOtherEvent.getParticle(), newOtherEvent);
                     newNextEvents.computeIfAbsent(newOtherEvent.getTime(), time -> new HashSet<>()).add(newOtherEvent);
                 }
             }
         }
 
-        return new Step(newNextEvents, newParticleNextEvent, absoluteTime - previousStep.getAbsoluteTime(), absoluteTime, previousStep.getStep() + 1);
+        return new Step(newNextEvents, absoluteTime - previousStep.getAbsoluteTime(), absoluteTime, previousStep.getStep() + 1);
     }
 
     private Step calculateFirstStep() {
         TreeMap<Double, Set<Event>> nextEvents = new TreeMap<>();
-        Map<Particle, Event> particleNextEvent = new HashMap<>();
 
         // Put eventos
         for (Particle p : this.particles) {
@@ -131,14 +104,9 @@ public class GasDiffusion {
             } else {
                 nextEvents.computeIfAbsent(event.getTime(), time -> new HashSet<>()).add(event);
             }
-
-            particleNextEvent.put(event.getParticle(), event);
-            if (!event.collidesWithWall()) {
-                particleNextEvent.put(event.getOtherParticle(), event);
-            }
         }
 
-        return new Step(nextEvents, particleNextEvent, 0, 0, 0);
+        return new Step(nextEvents, 0, 0, 0);
     }
 
     private Event getEvent(Particle particle, double absoluteTime) {
@@ -169,14 +137,12 @@ public class GasDiffusion {
 
     private static class Step {
         private final TreeMap<Double, Set<Event>> nextEvents;
-        private final Map<Particle, Event> particleNextEvent;
         private final double deltaTime;
         private final double absoluteTime;
         private final int step;
 
-        public Step(TreeMap<Double, Set<Event>> nextEvents, Map<Particle, Event> particleNextEvent, double deltaTime, double absoluteTime, int step) {
+        public Step(TreeMap<Double, Set<Event>> nextEvents, double deltaTime, double absoluteTime, int step) {
             this.nextEvents = nextEvents;
-            this.particleNextEvent = particleNextEvent;
             this.deltaTime = deltaTime;
             this.absoluteTime = absoluteTime;
             this.step = step;
@@ -184,10 +150,6 @@ public class GasDiffusion {
 
         public TreeMap<Double, Set<Event>> getNextEvents() {
             return this.nextEvents;
-        }
-
-        public Map<Particle, Event> getParticleNextEvent() {
-            return this.particleNextEvent;
         }
 
         public double getRelativeTime() {
@@ -200,6 +162,27 @@ public class GasDiffusion {
 
         public int getStep() {
             return this.step;
+        }
+
+        public Map.Entry<Double, Set<Event>> getFirstEvents() {
+            Map.Entry<Double, Set<Event>> firstEvents;
+
+            do {
+                firstEvents = this.nextEvents.firstEntry();
+                if (firstEvents == null)
+                    return null;
+
+                this.removeStaleEvents(firstEvents.getValue());
+                if (firstEvents.getValue().isEmpty()) {
+                    this.nextEvents.remove(firstEvents.getKey());
+                }
+            } while (firstEvents.getValue().isEmpty());
+
+            return firstEvents;
+        }
+
+        private void removeStaleEvents(Set<Event> events) {
+            events.removeIf(event -> !event.isValid());
         }
     }
 }

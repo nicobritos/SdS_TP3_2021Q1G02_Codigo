@@ -71,7 +71,7 @@ public final class Equations {
                 }
             }
         }
-        return new Pair<>(tc, particle);
+        return new Pair<>(tc < 0 ? 0 : tc, particle);
     }
 
     public Collection<Particle> evolveParticlesPositions(Collection<Particle> particles, double tc) {
@@ -93,7 +93,7 @@ public final class Equations {
         return new Pair<>(v1d, v2d);
     }
 
-    public Double goThroughApertureTime(Particle p, Dimen systemDimens) {
+    public double goThroughApertureTime(Particle p, Dimen systemDimens) {
         double tc = Double.POSITIVE_INFINITY;
         double x0 = p.getPosition().getX();
         if (p.getVelocity().getxSpeed() > 0 && x0 < systemDimens.getApertureX()) {
@@ -129,7 +129,7 @@ public final class Equations {
         return tcAux;
     }
 
-    public Pair<Double, Double> getparticleProportion(Collection<Particle> particles, Dimen systemDimens){
+    public Pair<Double, Double> getParticleProportion(Collection<Particle> particles, Dimen systemDimens){
         double left = 0;
         double size = particles.size();
         for(Particle particle: particles){
@@ -173,6 +173,10 @@ public final class Equations {
     private double tita(Particle p1, Particle p2) {
         return p1.getRadius() + p2.getRadius();
     }
+//    // Tita solo se usa en colisiones, entonces se puede usar pitagoras (y es mas preciso)
+//    private double tita(Particle p1, Particle p2) {
+//        return Math.sqrt(Math.pow(p1.getPosition().getX() - p2.getPosition().getX(), 2) + Math.pow(p1.getPosition().getY() - p2.getPosition().getY(), 2));
+//    }
 
     private double deltaVTimesdeltaV(Particle p1, Particle p2) {
         return Math.pow(this.deltaVx(p1, p2), 2) + Math.pow(this.deltaVy(p1, p2), 2);

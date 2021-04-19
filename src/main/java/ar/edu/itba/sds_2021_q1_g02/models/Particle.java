@@ -12,6 +12,7 @@ public class Particle {
     private final Set<Particle> neighbors;
     private Position position;
     private Velocity velocity;
+    private int collisionCount;
 
     public Particle(int id, double radius,double mass,Position position,Velocity velocity) {
         this.id = id;
@@ -20,6 +21,7 @@ public class Particle {
         this.mass = mass;
         this.position = position;
         this.velocity = velocity;
+        this.collisionCount = 0;
     }
 
     public int getId() {
@@ -52,6 +54,14 @@ public class Particle {
 
     public Collection<Particle> getNeighbors() {
         return this.neighbors;
+    }
+
+    public int getCollisionCount() {
+        return this.collisionCount;
+    }
+
+    public void increaseCollision() {
+        this.collisionCount += 1;
     }
 
     public Particle copy() {

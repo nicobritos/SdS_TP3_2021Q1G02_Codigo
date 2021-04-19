@@ -7,12 +7,16 @@ public class Event implements Comparable<Event> {
     private final Particle particle;
     private final Particle otherParticle;
     private final Direction wallDirection;
+    private final int collisionCountParticle1;
+    private final int collisionCountParticle2;
 
     public Event(double time, Particle particle, Particle otherParticle) {
         this.time = time;
 
         this.particle = particle;
         this.otherParticle = otherParticle;
+        this.collisionCountParticle1 = this.particle.getCollisionCount();
+        this.collisionCountParticle2 = this.otherParticle.getCollisionCount();
 
         this.wallDirection = null;
     }
@@ -22,6 +26,8 @@ public class Event implements Comparable<Event> {
 
         this.particle = particle;
         this.wallDirection = wallDirection;
+        this.collisionCountParticle1 = this.particle.getCollisionCount();
+        this.collisionCountParticle2 = 0;
 
         this.otherParticle = null;
     }
@@ -44,6 +50,11 @@ public class Event implements Comparable<Event> {
 
     public boolean collidesWithWall() {
         return this.wallDirection != null;
+    }
+
+    public boolean isValid() {
+        return this.collisionCountParticle1 == this.particle.getCollisionCount() &&
+                (this.collidesWithWall() || this.collisionCountParticle2 == this.otherParticle.getCollisionCount());
     }
 
     @Override
