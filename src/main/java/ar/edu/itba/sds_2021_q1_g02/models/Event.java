@@ -76,4 +76,10 @@ public class Event implements Comparable<Event> {
                 (this.getParticle().equals(other.getOtherParticle()) && this.getOtherParticle().equals(this.getParticle()))
         );
     }
+
+    public Event getInverse() {
+        if (this.collidesWithWall())
+            return new Event(this.time, this.particle, this.wallDirection);
+        return new Event(this.time, this.otherParticle, this.particle);
+    }
 }

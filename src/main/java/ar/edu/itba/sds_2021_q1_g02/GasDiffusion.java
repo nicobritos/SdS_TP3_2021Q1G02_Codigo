@@ -26,7 +26,7 @@ public class GasDiffusion {
         Step step = this.calculateFirstStep();
         while (step.getStep() < maxIterations) {
             step = this.simulateStep(step);
-            this.serialize(step.getStep(), step.getRelativeTime(), step.getAbsoluteTime());
+            this.serialize(step.getStep() - 1, step.getRelativeTime(), step.getAbsoluteTime());
         }
     }
 
@@ -62,6 +62,7 @@ public class GasDiffusion {
         for (Event event : firstEvents.getValue()) {
             // El evento ya paso
             newNextEvent.remove(event);
+            newNextEvent.remove(event.getInverse());
             if (newNextEvent.isEmpty())
                 newNextEvents.remove(event.getTime());
 
@@ -72,6 +73,7 @@ public class GasDiffusion {
             Set<Event> particleEvents = newNextEvents.get(particleEvent.getTime());
             if (particleEvents != null) {
                 particleEvents.remove(particleEvent);
+                particleEvents.remove(particleEvent.getInverse());
                 if (particleEvents.isEmpty())
                     newNextEvents.remove(particleEvent.getTime());
             }
@@ -82,6 +84,7 @@ public class GasDiffusion {
                 Set<Event> otherParticleEvents = newNextEvents.get(otherParticleEvent.getTime());
                 if (otherParticleEvents != null) {
                     otherParticleEvents.remove(particleEvent);
+                    otherParticleEvents.remove(particleEvent.getInverse());
                     if (otherParticleEvents.isEmpty()) {
                         newNextEvents.remove(otherParticleEvent.getTime());
                     }
@@ -122,7 +125,7 @@ public class GasDiffusion {
             if (!event.collidesWithWall()) {
                 Set<Event> setEvents = nextEvents.get(event.getTime());
                 if (setEvents != null) {
-                    if (!setEvents.contains(new Event(event.getTime(), event.getOtherParticle(), event.getParticle()))) {
+                    if (!setEvents.contains(event.getInverse())) {
                         setEvents.add(event);
                     }
                 } else {

@@ -28,8 +28,6 @@ public class Position {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(" [").append((int) this.x).append(",").append((int) this.y).append("] ");
-        return sb.toString();
+        return String.format("(%.5f, %.5f)", this.x, this.y);
     }
 }

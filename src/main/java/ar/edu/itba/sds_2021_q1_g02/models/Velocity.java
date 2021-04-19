@@ -20,4 +20,9 @@ public class Velocity {
     public Velocity copy() {
         return new Velocity(this.xSpeed, this.ySpeed);
     }
+
+    @Override
+    public String toString() {
+        return String.format("(%.5f, %.5f)", this.xSpeed, this.ySpeed);
+    }
 }
