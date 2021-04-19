@@ -29,6 +29,7 @@ public class OvitoSerializer implements Serializer {
             throw new RuntimeException("Couldn't delete file: " + file.getName());
 
         try {
+            file.getParentFile().mkdirs();
             if (!file.createNewFile())
                 throw new RuntimeException("Couldn't create file: " + file.getName());
 
