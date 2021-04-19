@@ -5,6 +5,7 @@ import ar.edu.itba.sds_2021_q1_g02.models.Dimen;
 import ar.edu.itba.sds_2021_q1_g02.models.Particle;
 import ar.edu.itba.sds_2021_q1_g02.parsers.CommandParser;
 import ar.edu.itba.sds_2021_q1_g02.parsers.ParticleParser;
+import ar.edu.itba.sds_2021_q1_g02.serializer.CSVSerializer;
 import ar.edu.itba.sds_2021_q1_g02.serializer.ConsoleSerializer;
 import ar.edu.itba.sds_2021_q1_g02.serializer.OvitoSerializer;
 import javafx.util.Pair;
@@ -25,7 +26,7 @@ public class App {
 
         GD.addSerializer(new OvitoSerializer(
                 (systemParticles, step, dt, abs) -> (systemParticles.size() + 2) + "\n" + "Properties=id:R:1:radius:R:1:pos:R:2:mass:R:1:color:R:3:transparency:R:1",
-                (particle, step, dt) -> {
+                (particle, step, dt, abs) -> {
                     // id (1), radius (1), pos (2), size (1), color (3, RGB)";
                     String s = particle.getId() + "\t" +
                             particle.getRadius() + "\t" +
@@ -36,9 +37,9 @@ public class App {
                     if (particle.getRadius() > 0) {
                         Color color = getParticleColor(particle, dimen);
                         s += color.getRed() + "\t" +
-                             color.getGreen() + "\t" +
-                             color.getBlue() + "\t" +
-                             "0.0";
+                                color.getGreen() + "\t" +
+                                color.getBlue() + "\t" +
+                                "0.0";
                     } else {
                         s += "0.0\t0.0\t0.0\t1.0";
                     }
@@ -47,6 +48,23 @@ public class App {
                 },
                 step -> "output/output_" + step + ".xyz",
                 dimen
+        ));
+
+        GD.addSerializer(new CSVSerializer(
+                (systemParticles, step, dt, abs) -> "id;\"radius [m]\";\"x [m]\";\"y [m]\";\"mass [kg]\";\"vx [m/s]\";\"vy [m/s]\";\"dt [s]\";\"t [s]\"",
+                (particle, step, dt, abs) -> {
+                    // id (1), radius (1), pos (2), size (1), speed (2), dt (1), t (1)";
+                    return  particle.getId() + ";" +
+                            particle.getRadius() + ";" +
+                            particle.getPosition().getX() + ";" +
+                            particle.getPosition().getY() + ";" +
+                            particle.getMass() + ";" +
+                            particle.getVelocity().getxSpeed() + ";" +
+                            particle.getVelocity().getySpeed() + ";" +
+                            dt + ";" +
+                            abs;
+                },
+                step -> "output/output_" + step + ".csv"
         ));
 
         GD.addSerializer(new ConsoleSerializer(
@@ -62,7 +80,7 @@ public class App {
                             " dT = " + String.format("%.5fs", dt) +
                             " abs = " + String.format("%.5fs", absoluteTime);
                 },
-                (particle, step, dt) -> {
+                (particle, step, dt, abs) -> {
                     return particle.getId() + " | " +
                         String.format("(%.5f, %.5f)m", particle.getPosition().getX(), particle.getPosition().getY()) + " | " +
                         String.format("(%.5f, %.5f)m/s", particle.getVelocity().getxSpeed(), particle.getVelocity().getySpeed());

@@ -6,5 +6,5 @@ import java.util.List;
 
 @FunctionalInterface
 public interface ParticleFormatter {
-    String format(Particle particle, int step, double dt);
+    String format(Particle particle, int step, double dt, double absoluteTime);
 }

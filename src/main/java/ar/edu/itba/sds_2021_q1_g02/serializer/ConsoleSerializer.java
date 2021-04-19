@@ -29,7 +29,7 @@ public class ConsoleSerializer implements Serializer {
 
         if (particles.size() < CONSOLE_SERIALIZER_LIMIT) {
             for (Particle p : particles) {
-                System.out.println(this.particleFormatter.format(p, step, dt));
+                System.out.println(this.particleFormatter.format(p, step, dt, absoluteTime));
             }
         }
 
