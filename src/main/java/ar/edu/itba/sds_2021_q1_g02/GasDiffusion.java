@@ -32,10 +32,10 @@ public class GasDiffusion {
 
     private Step simulateStep(Step previousStep) {
         Map.Entry<Double, Set<Event>> firstEvents = previousStep.getNextEvents().firstEntry();
-        // Mover particulas a primer proximo evento
-        Equations.getInstance().evolveParticlesPositions(this.particles, firstEvents.getKey() - previousStep.getAbsoluteTime());
-
         double absoluteTime = firstEvents.getKey();
+
+        // Mover particulas a primer proximo evento
+        Equations.getInstance().evolveParticlesPositions(this.particles, absoluteTime - previousStep.getAbsoluteTime());
 
         TreeMap<Double, Set<Event>> newNextEvents = new TreeMap<>(previousStep.getNextEvents());
         Map<Particle, Event> newParticleNextEvent = new HashMap<>(previousStep.getParticleNextEvent());
@@ -84,8 +84,8 @@ public class GasDiffusion {
                 newParticleNextEvent.remove(event.getOtherParticle());
                 Set<Event> otherParticleEvents = newNextEvents.get(otherParticleEvent.getTime());
                 if (otherParticleEvents != null) {
-                    otherParticleEvents.remove(particleEvent);
-                    otherParticleEvents.remove(particleEvent.getInverse());
+                    otherParticleEvents.remove(otherParticleEvent);
+                    otherParticleEvents.remove(otherParticleEvent.getInverse());
                     if (otherParticleEvents.isEmpty()) {
                         newNextEvents.remove(otherParticleEvent.getTime());
                     }
@@ -96,9 +96,6 @@ public class GasDiffusion {
             Event newEvent = this.getEvent(event.getParticle(), absoluteTime);
             if (newEvent != null) {
                 newParticleNextEvent.put(newEvent.getParticle(), newEvent);
-                if (!newEvent.collidesWithWall())
-                    newParticleNextEvent.put(newEvent.getOtherParticle(), newEvent);
-
                 newNextEvents.computeIfAbsent(newEvent.getTime(), time -> new HashSet<>()).add(newEvent);
             }
             if (!event.collidesWithWall()) {
