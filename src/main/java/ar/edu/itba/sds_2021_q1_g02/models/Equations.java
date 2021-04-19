@@ -76,24 +76,19 @@ public final class Equations {
 
     public Collection<Particle> evolveParticlesPositions(Collection<Particle> particles, double tc) {
         for (Particle p : particles) {
-            p.getPosition().setX(p.getPosition().getX() + p.getVelocity().getxSpeed() * tc);
-            p.getPosition().setY(p.getPosition().getY() + p.getVelocity().getySpeed() * tc);
+            p.getPosition().setX(Mru.positionCalculation(p.getPosition().getX(), tc, p.getVelocity().getxSpeed()));
+            p.getPosition().setY(Mru.positionCalculation(p.getPosition().getY(), tc, p.getVelocity().getySpeed()));
         }
-
         return particles;
     }
 
     public Velocity evolveParticleVelocity(Particle p, Direction direction) {
-        return direction.equals(Direction.VERTICAL) ? new Velocity(-p.getVelocity().getxSpeed(),
-                p.getVelocity().getySpeed()) :
-                new Velocity(p.getVelocity().getxSpeed(), -p.getVelocity().getySpeed());
+        return direction.equals(Direction.VERTICAL) ? new Velocity(-p.getVelocity().getxSpeed(), p.getVelocity().getySpeed()) : new Velocity(p.getVelocity().getxSpeed(), -p.getVelocity().getySpeed());
     }
 
     public Pair<Velocity, Velocity> evolveParticlesVelocities(Particle p1, Particle p2) {
-        Velocity v1d = new Velocity(p1.getVelocity().getxSpeed() + (this.Jx(p1, p2) / p1.getMass()),
-                p1.getVelocity().getySpeed() + (this.Jy(p1, p2) / p1.getMass()));
-        Velocity v2d = new Velocity(p2.getVelocity().getxSpeed() - (this.Jx(p1, p2) / p2.getMass()),
-                p2.getVelocity().getySpeed() - (this.Jy(p1, p2) / p2.getMass()));
+        Velocity v1d = new Velocity(p1.getVelocity().getxSpeed() + (this.Jx(p1, p2) / p1.getMass()), p1.getVelocity().getySpeed() + (this.Jy(p1, p2) / p1.getMass()));
+        Velocity v2d = new Velocity(p2.getVelocity().getxSpeed() - (this.Jx(p1, p2) / p2.getMass()), p2.getVelocity().getySpeed() - (this.Jy(p1, p2) / p2.getMass()));
 
         return new Pair<>(v1d, v2d);
     }
@@ -134,8 +129,18 @@ public final class Equations {
         return tcAux;
     }
 
-    private double collisionTimeWithWall(double iWall, double fWall, double partPos, double partRadius,
-                                         double partSpeed) {
+    public Pair<Double, Double> getparticleProportion(Collection<Particle> particles, Dimen systemDimens){
+        double left = 0;
+        double size = particles.size();
+        for(Particle particle: particles){
+            if(particle.getPosition().getX() <= systemDimens.getApertureX()){
+                left +=1;
+            }
+        }
+        return new Pair<Double,Double>(left/size,(size-left)/size);
+    }
+
+    private double collisionTimeWithWall(double iWall, double fWall, double partPos, double partRadius, double partSpeed) {
         double tc;
         if (partSpeed > 0) {
             tc = Mru.timeCalculation(partPos, fWall - partRadius, partSpeed);
