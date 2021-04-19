@@ -7,6 +7,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class ConsoleSerializer implements Serializer {
+    private static final int CONSOLE_SERIALIZER_LIMIT = 50;
+
     private final SystemFormatter systemFormatter;
     private final StepFormatter stepFormatter;
     private final ParticleFormatter particleFormatter;
@@ -25,9 +27,13 @@ public class ConsoleSerializer implements Serializer {
     @Override
     public void serialize(Collection<Particle> particles, int step, double dt, double absoluteTime) {
         System.out.println(this.stepFormatter.format(particles, step, dt, absoluteTime));
-        for (Particle p : particles) {
-            System.out.println(this.particleFormatter.format(p, step, dt));
+
+        if (particles.size() < CONSOLE_SERIALIZER_LIMIT) {
+            for (Particle p : particles) {
+                System.out.println(this.particleFormatter.format(p, step, dt));
+            }
         }
+
         System.out.println("----------------------");
     }
 }

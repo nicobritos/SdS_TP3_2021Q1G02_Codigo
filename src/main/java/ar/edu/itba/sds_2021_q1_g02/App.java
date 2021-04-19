@@ -14,8 +14,6 @@ import java.io.IOException;
 import java.util.List;
 
 public class App {
-    private static final int CONSOLE_SERIALIZER_LIMIT = 50;
-
     public static void main(String[] args) throws ParseException, IOException {
         CommandParser.getInstance().parse(args);
 
@@ -51,27 +49,25 @@ public class App {
                 dimen
         ));
 
-        if (particles.getKey().size() < CONSOLE_SERIALIZER_LIMIT) {
-            GD.addSerializer(new ConsoleSerializer(
-                    (systemParticles, systemDimen) -> {
-                        return  "Height = " + String.format("%.5f", systemDimen.getYvf() - systemDimen.getYvi()) +
-                                "m; Width = " + String.format("%.5f", systemDimen.getXvf() - systemDimen.getXvi()) +
-                                "m; Aperture size = " + String.format("%.5f", systemDimen.getApertureYvf() - systemDimen.getApertureYvi()) +
-                                "m; Aperture X position = " + String.format("%.5f", systemDimen.getApertureX()) +
-                                "m";
-                    },
-                    (stepParticles, step, dt, absoluteTime) -> {
-                        return "** Step = " + step +
-                                " dT = " + String.format("%.5fs", dt) +
-                                " abs = " + String.format("%.5fs", absoluteTime);
-                    },
-                    (particle, step, dt) -> {
-                        return particle.getId() + " | " +
-                                String.format("(%.5f, %.5f)m", particle.getPosition().getX(), particle.getPosition().getY()) + " | " +
-                                String.format("(%.5f, %.5f)m/s", particle.getVelocity().getxSpeed(), particle.getVelocity().getySpeed());
-                    }
-            ));
-        }
+        GD.addSerializer(new ConsoleSerializer(
+                (systemParticles, systemDimen) -> {
+                    return  "Height = " + String.format("%.5f", systemDimen.getYvf() - systemDimen.getYvi()) +
+                            "m; Width = " + String.format("%.5f", systemDimen.getXvf() - systemDimen.getXvi()) +
+                            "m; Aperture size = " + String.format("%.5f", systemDimen.getApertureYvf() - systemDimen.getApertureYvi()) +
+                            "m; Aperture X position = " + String.format("%.5f", systemDimen.getApertureX()) +
+                            "m";
+                },
+                (stepParticles, step, dt, absoluteTime) -> {
+                    return "** Step = " + step +
+                            " dT = " + String.format("%.5fs", dt) +
+                            " abs = " + String.format("%.5fs", absoluteTime);
+                },
+                (particle, step, dt) -> {
+                    return particle.getId() + " | " +
+                        String.format("(%.5f, %.5f)m", particle.getPosition().getX(), particle.getPosition().getY()) + " | " +
+                        String.format("(%.5f, %.5f)m/s", particle.getVelocity().getxSpeed(), particle.getVelocity().getySpeed());
+                }
+        ));
 
         System.out.println("Running simulation");
         GD.simulate(CommandParser.getInstance().getMaxIterations());
