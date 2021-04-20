@@ -21,17 +21,19 @@ public class App {
         System.out.println("Parsing particles");
         Pair<List<Particle>, Integer> particles = ParticleParser.parseParticles(CommandParser.getInstance().getInputPath());
 
-        Dimen dimen = new Dimen(0, 0.24, 0, 0.09, 0.05);
+        Dimen dimen = new Dimen(0, 0.24, 0, 0.09, 0.01);
         GasDiffusion GD = new GasDiffusion(particles.getKey(), dimen);
 
         GD.addSerializer(new OvitoSerializer(
-                (systemParticles, step, dt, abs) -> (systemParticles.size() + 2) + "\n" + "Properties=id:R:1:radius:R:1:pos:R:2:mass:R:1:color:R:3:transparency:R:1",
+                (systemParticles, step, dt, abs) -> (systemParticles.size() + 2) + "\n" + "Properties=id:R:1:radius:R:1:pos:R:2:Velocity:R:2:mass:R:1:color:R:3:transparency:R:1",
                 (particle, step, dt, abs) -> {
                     // id (1), radius (1), pos (2), size (1), color (3, RGB)";
                     String s = particle.getId() + "\t" +
                             particle.getRadius() + "\t" +
                             particle.getPosition().getX() + "\t" +
                             particle.getPosition().getY() + "\t" +
+                            particle.getVelocity().getxSpeed() + "\t" +
+                            particle.getVelocity().getySpeed() + "\t" +
                             particle.getMass() + "\t";
 
                     if (particle.getRadius() > 0) {

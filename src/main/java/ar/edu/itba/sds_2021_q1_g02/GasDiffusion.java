@@ -32,6 +32,8 @@ public class GasDiffusion {
 
     private Step simulateStep(Step previousStep) {
         Map.Entry<Double, Set<Event>> firstEvents = previousStep.getFirstEvents();
+        if (firstEvents == null)
+            return null; // TODO
         double absoluteTime = firstEvents.getKey();
 
         // Mover particulas a primer proximo evento
@@ -40,6 +42,9 @@ public class GasDiffusion {
         TreeMap<Double, Set<Event>> newNextEvents = new TreeMap<>(previousStep.getNextEvents());
 
         for (Event event : firstEvents.getValue()) {
+            if (!event.isValid())
+                continue;
+
             // Colisionar
             event.getParticle().increaseCollision();
             if (event.collidesWithWall()) {
@@ -68,14 +73,17 @@ public class GasDiffusion {
                 newNextEvents.remove(event.getTime());
 
             // Recalculamos proximos eventos de las particulas colisionadas
-            Event newEvent = this.getEvent(event.getParticle(), absoluteTime);
-            if (newEvent != null) {
+            Set<Event> newEvents = this.getEvent(event.getParticle(), absoluteTime, previousStep.step);
+            for (Event newEvent : newEvents) {
                 newNextEvents.computeIfAbsent(newEvent.getTime(), time -> new HashSet<>()).add(newEvent);
             }
+
             if (!event.collidesWithWall()) {
-                Event newOtherEvent = this.getEvent(event.getOtherParticle(), absoluteTime);
-                if (newOtherEvent != null && !newOtherEvent.equalsInverse(newEvent)) {
-                    newNextEvents.computeIfAbsent(newOtherEvent.getTime(), time -> new HashSet<>()).add(newOtherEvent);
+                Set<Event> newOtherEvents = this.getEvent(event.getOtherParticle(), absoluteTime, previousStep.step);
+                for (Event newOtherEvent : newOtherEvents) {
+                    if (!newEvents.contains(newOtherEvent.getInverse())) {
+                        newNextEvents.computeIfAbsent(newOtherEvent.getTime(), time -> new HashSet<>()).add(newOtherEvent);
+                    }
                 }
             }
         }
@@ -88,20 +96,11 @@ public class GasDiffusion {
 
         // Put eventos
         for (Particle p : this.particles) {
-            Event event = this.getEvent(p, 0);
-            if (event == null)
+            Set<Event> events = this.getEvent(p, 0, 0);
+            if (events.isEmpty())
                 continue;
 
-            if (!event.collidesWithWall()) {
-                Set<Event> setEvents = nextEvents.get(event.getTime());
-                if (setEvents != null) {
-                    if (!setEvents.contains(event.getInverse())) {
-                        setEvents.add(event);
-                    }
-                } else {
-                    nextEvents.computeIfAbsent(event.getTime(), time -> new HashSet<>()).add(event);
-                }
-            } else {
+            for (Event event : events) {
                 nextEvents.computeIfAbsent(event.getTime(), time -> new HashSet<>()).add(event);
             }
         }
@@ -109,18 +108,17 @@ public class GasDiffusion {
         return new Step(nextEvents, 0, 0, 0);
     }
 
-    private Event getEvent(Particle particle, double absoluteTime) {
+    private Set<Event> getEvent(Particle particle, double absoluteTime, int step) {
         Pair<Double, Direction> wallCollision = Equations.getInstance().collisionWall(particle, this.dimen);
         Pair<Double, Particle> particleCollision = Equations.getInstance().collisionParticles(particle, this.particles);
 
-        if (wallCollision.getKey() == Double.POSITIVE_INFINITY && particleCollision.getKey() == Double.POSITIVE_INFINITY)
-            return null;
+        Set<Event> events = new HashSet<>();
+        if (wallCollision.getKey() != Double.POSITIVE_INFINITY)
+            events.add(new Event(wallCollision.getKey() + absoluteTime, particle, wallCollision.getValue()));
+        if (particleCollision.getKey() != Double.POSITIVE_INFINITY)
+            events.add(new Event(particleCollision.getKey() + absoluteTime, particle, particleCollision.getValue()));
 
-        if (wallCollision.getKey() < particleCollision.getKey()) {
-            return new Event(wallCollision.getKey() + absoluteTime, particle, wallCollision.getValue());
-        } else {
-            return new Event(particleCollision.getKey() + absoluteTime, particle, particleCollision.getValue());
-        }
+        return events;
     }
 
     private void serializeSystem() {
@@ -182,7 +180,10 @@ public class GasDiffusion {
         }
 
         private void removeStaleEvents(Set<Event> events) {
-            events.removeIf(event -> !event.isValid());
+            int step = this.step;
+            events.removeIf(event -> {
+                return !event.isValid();
+            });
         }
     }
 }

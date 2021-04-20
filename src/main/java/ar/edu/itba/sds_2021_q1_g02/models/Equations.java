@@ -150,16 +150,16 @@ public final class Equations {
         return tc;
     }
 
-    private double J(Particle p1, Particle p2) {
-        return (2 * p1.getMass() * p2.getMass() * this.deltaVTimesdeltaR(p1, p2)) / (this.tita(p1, p2) * (p1.getMass() + p2.getMass()));
+    private double partialJ(Particle p1, Particle p2) {
+        return (2 * p1.getMass() * p2.getMass() * this.deltaVTimesdeltaR(p1, p2));
     }
 
     private double Jx(Particle p1, Particle p2) {
-        return this.J(p1, p2) * this.deltaX(p1, p2) / this.tita(p1, p2);
+        return this.partialJ(p1, p2) * this.deltaX(p1, p2) / (this.titaSquared(p1, p2) * (p1.getMass() + p2.getMass()));
     }
 
     private double Jy(Particle p1, Particle p2) {
-        return this.J(p1, p2) * this.deltaY(p1, p2) / this.tita(p1, p2);
+        return this.partialJ(p1, p2) * this.deltaY(p1, p2) / (this.titaSquared(p1, p2) * (p1.getMass() + p2.getMass()));
     }
 
     private Velocity deltaV(Particle p1, Particle p2) {
@@ -170,12 +170,12 @@ public final class Equations {
         return new Position(this.deltaX(p1, p2), this.deltaY(p1, p2));
     }
 
-    private double tita(Particle p1, Particle p2) {
-        return p1.getRadius() + p2.getRadius();
+    private double titaSquared(Particle p1, Particle p2) {
+        return Math.pow(p1.getRadius() + p2.getRadius(), 2);
     }
-//    // Tita solo se usa en colisiones, entonces se puede usar pitagoras (y es mas preciso)
-//    private double tita(Particle p1, Particle p2) {
-//        return Math.sqrt(Math.pow(p1.getPosition().getX() - p2.getPosition().getX(), 2) + Math.pow(p1.getPosition().getY() - p2.getPosition().getY(), 2));
+    // Tita solo se usa en colisiones, entonces se puede usar pitagoras (y es mas preciso)
+//    private double titaSquared(Particle p1, Particle p2) {
+//        return Math.pow(p1.getPosition().getX() - p2.getPosition().getX(), 2) + Math.pow(p1.getPosition().getY() - p2.getPosition().getY(), 2);
 //    }
 
     private double deltaVTimesdeltaV(Particle p1, Particle p2) {
@@ -203,7 +203,7 @@ public final class Equations {
     }
 
     private double d(Particle p1, Particle p2) {
-        return Math.pow(this.deltaVTimesdeltaR(p1, p2), 2) - this.deltaVTimesdeltaV(p1, p2) * (this.deltaRTimesdeltaR(p1, p2) - Math.pow(this.tita(p1, p2), 2));
+        return Math.pow(this.deltaVTimesdeltaR(p1, p2), 2) - this.deltaVTimesdeltaV(p1, p2) * (this.deltaRTimesdeltaR(p1, p2) - this.titaSquared(p1, p2));
     }
 
     private double deltaRTimesdeltaR(Particle p1, Particle p2) {
