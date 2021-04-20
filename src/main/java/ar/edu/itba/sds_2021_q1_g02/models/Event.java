@@ -2,6 +2,7 @@ package ar.edu.itba.sds_2021_q1_g02.models;
 
 import java.util.Objects;
 
+@Deprecated
 public class Event implements Comparable<Event> {
     private final double time;
     private final Particle particle;

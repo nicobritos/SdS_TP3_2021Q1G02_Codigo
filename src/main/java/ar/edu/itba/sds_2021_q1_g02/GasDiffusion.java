@@ -31,7 +31,7 @@ public class GasDiffusion {
     }
 
     private Step simulateStep(Step previousStep) {
-        Map.Entry<Double, Set<Event>> firstEvents = previousStep.getFirstEvents();
+        Map.Entry<Double, Set<IEvent>> firstEvents = previousStep.getFirstEvents();
         if (firstEvents == null)
             return null; // TODO
         double absoluteTime = firstEvents.getKey();
@@ -39,68 +39,80 @@ public class GasDiffusion {
         // Mover particulas a primer proximo evento
         Equations.getInstance().evolveParticlesPositions(this.particles, absoluteTime - previousStep.getAbsoluteTime());
 
-        TreeMap<Double, Set<Event>> newNextEvents = new TreeMap<>(previousStep.getNextEvents());
+        TreeMap<Double, Set<IEvent>> newNextEvents = new TreeMap<>(previousStep.getNextEvents());
 
-        for (Event event : firstEvents.getValue()) {
+        for (IEvent event : firstEvents.getValue()) {
             if (!event.isValid())
                 continue;
 
             // Colisionar
             event.getParticle().increaseCollision();
-            if (event.collidesWithWall()) {
-                Velocity newVelocity = Equations.getInstance().evolveParticleVelocity(event.getParticle(), event.getWallDirection());
+            if (event.getEventType().equals(EventType.COLLISION_WITH_WALL)) {
+                Velocity newVelocity = Equations.getInstance().evolveParticleVelocity(event.getParticle(),
+                        ((CollisionWithWallEvent) event).getWallDirection());
                 event.getParticle().setVelocity(newVelocity);
             } else {
-                Pair<Velocity, Velocity> velocities = Equations.getInstance().evolveParticlesVelocities(event.getParticle(), event.getOtherParticle());
+                Pair<Velocity, Velocity> velocities =
+                        Equations.getInstance().evolveParticlesVelocities(event.getParticle(),
+                                ((CollisionWithParticleEvent) event).getOtherParticle());
                 event.getParticle().setVelocity(velocities.getKey());
-                event.getOtherParticle().setVelocity(velocities.getValue());
-                event.getOtherParticle().increaseCollision();
+                ((CollisionWithParticleEvent) event).getOtherParticle().setVelocity(velocities.getValue());
+                ((CollisionWithParticleEvent) event).getOtherParticle().increaseCollision();
             }
         }
 
         // Copiamos el mapa y no iteramos sobre el mismo set para no
         // eliminar el mismo evento mientras se itera
-        for (Map.Entry<Double, Set<Event>> entry : previousStep.getNextEvents().entrySet()) {
+        for (Map.Entry<Double, Set<IEvent>> entry : previousStep.getNextEvents().entrySet()) {
             newNextEvents.put(entry.getKey(), new HashSet<>(entry.getValue()));
         }
 
-        Set<Event> newNextEvent = newNextEvents.get(firstEvents.getKey());
-        for (Event event : firstEvents.getValue()) {
+        Set<IEvent> newNextEvent = newNextEvents.get(firstEvents.getKey());
+        for (IEvent event : firstEvents.getValue()) {
             // El evento ya paso
             newNextEvent.remove(event);
-            newNextEvent.remove(event.getInverse());
+            if (event.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
+                newNextEvent.remove(((CollisionWithParticleEvent) event).getInverse());
+            }
             if (newNextEvent.isEmpty())
                 newNextEvents.remove(event.getTime());
 
             // Recalculamos proximos eventos de las particulas colisionadas
-            Set<Event> newEvents = this.getEvent(event.getParticle(), absoluteTime, previousStep.step);
-            for (Event newEvent : newEvents) {
+            Set<IEvent> newEvents = this.getEvent(event.getParticle(), absoluteTime, previousStep.step);
+            for (IEvent newEvent : newEvents) {
                 newNextEvents.computeIfAbsent(newEvent.getTime(), time -> new HashSet<>()).add(newEvent);
             }
 
-            if (!event.collidesWithWall()) {
-                Set<Event> newOtherEvents = this.getEvent(event.getOtherParticle(), absoluteTime, previousStep.step);
-                for (Event newOtherEvent : newOtherEvents) {
-                    if (!newEvents.contains(newOtherEvent.getInverse())) {
+            if (event.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
+                Set<IEvent> newOtherEvents = this.getEvent(((CollisionWithParticleEvent) event).getOtherParticle(),
+                        absoluteTime, previousStep.step);
+                for (IEvent newOtherEvent : newOtherEvents) {
+//                    if (newOtherEvent.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
+                    IEvent newOtherEventInverse =
+                            newOtherEvent.getEventType().equals(EventType.COLLISION_WITH_PARTICLE) ?
+                                    ((CollisionWithParticleEvent) newOtherEvent).getInverse() : newOtherEvent;
+                    if (!newEvents.contains(newOtherEventInverse)) {
                         newNextEvents.computeIfAbsent(newOtherEvent.getTime(), time -> new HashSet<>()).add(newOtherEvent);
                     }
+//                    }
                 }
             }
         }
 
-        return new Step(newNextEvents, absoluteTime - previousStep.getAbsoluteTime(), absoluteTime, previousStep.getStep() + 1);
+        return new Step(newNextEvents, absoluteTime - previousStep.getAbsoluteTime(), absoluteTime,
+                previousStep.getStep() + 1);
     }
 
     private Step calculateFirstStep() {
-        TreeMap<Double, Set<Event>> nextEvents = new TreeMap<>();
+        TreeMap<Double, Set<IEvent>> nextEvents = new TreeMap<>();
 
         // Put eventos
         for (Particle p : this.particles) {
-            Set<Event> events = this.getEvent(p, 0, 0);
+            Set<IEvent> events = this.getEvent(p, 0, 0);
             if (events.isEmpty())
                 continue;
 
-            for (Event event : events) {
+            for (IEvent event : events) {
                 nextEvents.computeIfAbsent(event.getTime(), time -> new HashSet<>()).add(event);
             }
         }
@@ -108,15 +120,17 @@ public class GasDiffusion {
         return new Step(nextEvents, 0, 0, 0);
     }
 
-    private Set<Event> getEvent(Particle particle, double absoluteTime, int step) {
+    private Set<IEvent> getEvent(Particle particle, double absoluteTime, int step) {
         Pair<Double, Direction> wallCollision = Equations.getInstance().collisionWall(particle, this.dimen);
         Pair<Double, Particle> particleCollision = Equations.getInstance().collisionParticles(particle, this.particles);
 
-        Set<Event> events = new HashSet<>();
+        Set<IEvent> events = new HashSet<>();
         if (wallCollision.getKey() != Double.POSITIVE_INFINITY)
-            events.add(new Event(wallCollision.getKey() + absoluteTime, particle, wallCollision.getValue()));
+            events.add(new CollisionWithWallEvent(wallCollision.getKey() + absoluteTime, particle,
+                    wallCollision.getValue()));
         if (particleCollision.getKey() != Double.POSITIVE_INFINITY)
-            events.add(new Event(particleCollision.getKey() + absoluteTime, particle, particleCollision.getValue()));
+            events.add(new CollisionWithParticleEvent(particleCollision.getKey() + absoluteTime, particle,
+                    particleCollision.getValue()));
 
         return events;
     }
@@ -134,19 +148,19 @@ public class GasDiffusion {
     }
 
     private static class Step {
-        private final TreeMap<Double, Set<Event>> nextEvents;
+        private final TreeMap<Double, Set<IEvent>> nextEvents;
         private final double deltaTime;
         private final double absoluteTime;
         private final int step;
 
-        public Step(TreeMap<Double, Set<Event>> nextEvents, double deltaTime, double absoluteTime, int step) {
+        public Step(TreeMap<Double, Set<IEvent>> nextEvents, double deltaTime, double absoluteTime, int step) {
             this.nextEvents = nextEvents;
             this.deltaTime = deltaTime;
             this.absoluteTime = absoluteTime;
             this.step = step;
         }
 
-        public TreeMap<Double, Set<Event>> getNextEvents() {
+        public TreeMap<Double, Set<IEvent>> getNextEvents() {
             return this.nextEvents;
         }
 
@@ -162,8 +176,8 @@ public class GasDiffusion {
             return this.step;
         }
 
-        public Map.Entry<Double, Set<Event>> getFirstEvents() {
-            Map.Entry<Double, Set<Event>> firstEvents;
+        public Map.Entry<Double, Set<IEvent>> getFirstEvents() {
+            Map.Entry<Double, Set<IEvent>> firstEvents;
 
             do {
                 firstEvents = this.nextEvents.firstEntry();
@@ -179,7 +193,7 @@ public class GasDiffusion {
             return firstEvents;
         }
 
-        private void removeStaleEvents(Set<Event> events) {
+        private void removeStaleEvents(Set<IEvent> events) {
             int step = this.step;
             events.removeIf(event -> {
                 return !event.isValid();
