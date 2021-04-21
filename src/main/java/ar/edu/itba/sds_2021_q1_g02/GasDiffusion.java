@@ -42,8 +42,11 @@ public class GasDiffusion {
         TreeMap<Double, Set<IEvent>> newNextEvents = new TreeMap<>(previousStep.getNextEvents());
 
         for (IEvent event : firstEvents.getValue()) {
-            if (!event.isValid())
+            if (!event.isValid()) {
+                if (event.getParticle().getId() == 160)
+                    System.out.print("");
                 continue;
+            }
 
             // Colisionar
             event.getParticle().increaseCollision();
@@ -80,21 +83,30 @@ public class GasDiffusion {
             // Recalculamos proximos eventos de las particulas colisionadas
             Set<IEvent> newEvents = this.getEvent(event.getParticle(), absoluteTime, previousStep.step);
             for (IEvent newEvent : newEvents) {
-                newNextEvents.computeIfAbsent(newEvent.getTime(), time -> new HashSet<>()).add(newEvent);
+                Set<IEvent> events = newNextEvents.computeIfAbsent(newEvent.getTime(), time -> new HashSet<>());
+                // Lo sacamos por si ya existe. Como hashcode no contempla el contador de colisiones
+                // entonces no se va a agregar un evento valido
+                events.remove(newEvent);
+                events.add(newEvent);
             }
 
             if (event.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
                 Set<IEvent> newOtherEvents = this.getEvent(((CollisionWithParticleEvent) event).getOtherParticle(),
                         absoluteTime, previousStep.step);
                 for (IEvent newOtherEvent : newOtherEvents) {
-//                    if (newOtherEvent.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
-                    IEvent newOtherEventInverse =
-                            newOtherEvent.getEventType().equals(EventType.COLLISION_WITH_PARTICLE) ?
-                                    ((CollisionWithParticleEvent) newOtherEvent).getInverse() : newOtherEvent;
-                    if (!newEvents.contains(newOtherEventInverse)) {
-                        newNextEvents.computeIfAbsent(newOtherEvent.getTime(), time -> new HashSet<>()).add(newOtherEvent);
+                    if (newOtherEvent.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
+                        IEvent newOtherEventInverse = ((CollisionWithParticleEvent) newOtherEvent).getInverse();
+                        if (newEvents.contains(newOtherEventInverse))
+                            continue;
                     }
-//                    }
+
+                    if (!newEvents.contains(newOtherEvent)) {
+                        Set<IEvent> events = newNextEvents.computeIfAbsent(newOtherEvent.getTime(), time -> new HashSet<>());
+                        // Lo sacamos por si ya existe. Como hashcode no contempla el contador de colisiones
+                        // entonces no se va a agregar un evento valido
+                        events.remove(newOtherEvent);
+                        events.add(newOtherEvent);
+                    }
                 }
             }
         }
@@ -194,10 +206,7 @@ public class GasDiffusion {
         }
 
         private void removeStaleEvents(Set<IEvent> events) {
-            int step = this.step;
-            events.removeIf(event -> {
-                return !event.isValid();
-            });
+            events.removeIf(event -> !event.isValid());
         }
     }
 }
