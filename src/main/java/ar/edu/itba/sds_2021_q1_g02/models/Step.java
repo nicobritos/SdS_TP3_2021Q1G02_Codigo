@@ -19,7 +19,10 @@ public class Step {
         this.step = step;
         this.particlesOnLeftSide = particlesOnLeftSide;
 
-        this.leftOccupationFactor = ((double) particleCount) / particlesOnLeftSide;
+        if (particlesOnLeftSide == 0)
+            this.leftOccupationFactor = 0;
+        else
+            this.leftOccupationFactor = ((double) particleCount) / particlesOnLeftSide;
     }
 
     public TreeMap<Double, Set<Event>> getNextEvents() {

@@ -152,6 +152,6 @@ target
 
 *.iml
 
-input.txt
+input*.txt
 
 output
