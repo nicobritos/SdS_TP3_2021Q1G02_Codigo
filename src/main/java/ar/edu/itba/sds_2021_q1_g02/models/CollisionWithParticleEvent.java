@@ -2,31 +2,17 @@ package ar.edu.itba.sds_2021_q1_g02.models;
 
 import java.util.Objects;
 
-public class CollisionWithParticleEvent implements IEvent, Comparable<CollisionWithWallEvent> {
-    private final double time;
-    private final Particle particle;
+public class CollisionWithParticleEvent extends Event {
     private final Particle otherParticle;
-    private final int collisionCountParticle1;
     private final int collisionCountParticle2;
     private final EventType eventType;
 
     public CollisionWithParticleEvent(double time, Particle particle, Particle otherParticle) {
-        this.time = time;
+        super(time, particle);
 
-        this.particle = particle;
         this.otherParticle = otherParticle;
-        this.collisionCountParticle1 = this.particle.getCollisionCount();
         this.collisionCountParticle2 = this.otherParticle.getCollisionCount();
         this.eventType = EventType.COLLISION_WITH_PARTICLE;
-    }
-
-    public boolean isValid() {
-        return this.collisionCountParticle1 == this.particle.getCollisionCount() && this.collisionCountParticle2 == this.otherParticle.getCollisionCount();
-    }
-
-    @Override
-    public EventType getEventType() {
-        return this.eventType;
     }
 
     public CollisionWithParticleEvent getInverse() {
@@ -37,21 +23,23 @@ public class CollisionWithParticleEvent implements IEvent, Comparable<CollisionW
         return this.otherParticle;
     }
 
-
-    @Override
-    public double getTime() {
-        return this.time;
+    public int getCollisionCountParticle2() {
+        return this.collisionCountParticle2;
     }
 
     @Override
-    public Particle getParticle() {
-        return this.particle;
+    public boolean isValid() {
+        return this.collisionCountParticle1 == this.particle.getCollisionCount() && this.collisionCountParticle2 == this.otherParticle.getCollisionCount();
     }
 
+    @Override
+    public EventType getEventType() {
+        return this.eventType;
+    }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.getTime(), this.getParticle(), this.getOtherParticle());
+        return Objects.hash(this.time, this.particle, this.otherParticle);
     }
 
     @Override
@@ -59,11 +47,6 @@ public class CollisionWithParticleEvent implements IEvent, Comparable<CollisionW
         if (this == o) return true;
         if (!(o instanceof CollisionWithParticleEvent)) return false;
         CollisionWithParticleEvent event = (CollisionWithParticleEvent) o;
-        return Double.compare(event.getTime(), this.getTime()) == 0 && this.getParticle().equals(event.getParticle()) && Objects.equals(this.getOtherParticle(), event.getOtherParticle());
-    }
-
-    @Override
-    public int compareTo(CollisionWithWallEvent o) {
-        return Double.compare(this.time, o.getTime());
+        return Double.compare(event.getTime(), this.time) == 0 && this.particle.equals(event.getParticle()) && Objects.equals(this.otherParticle, event.getOtherParticle());
     }
 }

@@ -2,20 +2,19 @@ package ar.edu.itba.sds_2021_q1_g02.models;
 
 import java.util.Objects;
 
-public class GoThroughApertureEvent implements IEvent, Comparable<CollisionWithWallEvent> {
-    private final double time;
-    private final Particle particle;
+public class GoThroughApertureEvent extends Event {
     private final EventType eventType;
+    private final MovementTowards movementTowards;
 
-    public GoThroughApertureEvent(double time, Particle particle) {
-        this.time = time;
+    public GoThroughApertureEvent(double time, Particle particle, MovementTowards movementTowards) {
+        super(time, particle);
 
-        this.particle = particle;
+        this.movementTowards = movementTowards;
         this.eventType = EventType.GO_THROUGH_APERTURE;
     }
 
-    public boolean isValid() {
-        return true;
+    public MovementTowards getMovementTowards() {
+        return this.movementTowards;
     }
 
     @Override
@@ -24,18 +23,8 @@ public class GoThroughApertureEvent implements IEvent, Comparable<CollisionWithW
     }
 
     @Override
-    public double getTime() {
-        return this.time;
-    }
-
-    @Override
-    public Particle getParticle() {
-        return this.particle;
-    }
-
-    @Override
     public int hashCode() {
-        return Objects.hash(this.getTime(), this.getParticle());
+        return Objects.hash(this.time, this.particle);
     }
 
     @Override
@@ -43,11 +32,6 @@ public class GoThroughApertureEvent implements IEvent, Comparable<CollisionWithW
         if (this == o) return true;
         if (!(o instanceof GoThroughApertureEvent)) return false;
         GoThroughApertureEvent event = (GoThroughApertureEvent) o;
-        return Double.compare(event.getTime(), this.getTime()) == 0 && this.getParticle().equals(event.getParticle());
-    }
-
-    @Override
-    public int compareTo(CollisionWithWallEvent o) {
-        return Double.compare(this.time, o.getTime());
+        return Double.compare(event.getTime(), this.time) == 0 && this.particle.equals(event.getParticle());
     }
 }

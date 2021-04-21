@@ -2,9 +2,7 @@ package ar.edu.itba.sds_2021_q1_g02.models;
 
 import javafx.util.Pair;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public final class Equations {
     private static Equations instance;
@@ -83,28 +81,34 @@ public final class Equations {
     }
 
     public Velocity evolveParticleVelocity(Particle p, Direction direction) {
-        return direction.equals(Direction.VERTICAL) ? new Velocity(-p.getVelocity().getxSpeed(), p.getVelocity().getySpeed()) : new Velocity(p.getVelocity().getxSpeed(), -p.getVelocity().getySpeed());
+        return direction.equals(Direction.VERTICAL) ? new Velocity(-p.getVelocity().getxSpeed(),
+                p.getVelocity().getySpeed()) : new Velocity(p.getVelocity().getxSpeed(), -p.getVelocity().getySpeed());
     }
 
     public Pair<Velocity, Velocity> evolveParticlesVelocities(Particle p1, Particle p2) {
-        Velocity v1d = new Velocity(p1.getVelocity().getxSpeed() + (this.Jx(p1, p2) / p1.getMass()), p1.getVelocity().getySpeed() + (this.Jy(p1, p2) / p1.getMass()));
-        Velocity v2d = new Velocity(p2.getVelocity().getxSpeed() - (this.Jx(p1, p2) / p2.getMass()), p2.getVelocity().getySpeed() - (this.Jy(p1, p2) / p2.getMass()));
+        Velocity v1d = new Velocity(p1.getVelocity().getxSpeed() + (this.Jx(p1, p2) / p1.getMass()),
+                p1.getVelocity().getySpeed() + (this.Jy(p1, p2) / p1.getMass()));
+        Velocity v2d = new Velocity(p2.getVelocity().getxSpeed() - (this.Jx(p1, p2) / p2.getMass()),
+                p2.getVelocity().getySpeed() - (this.Jy(p1, p2) / p2.getMass()));
 
         return new Pair<>(v1d, v2d);
     }
 
-    public double goThroughApertureTime(Particle p, Dimen systemDimens) {
+    public Pair<Double, MovementTowards> goThroughApertureTime(Particle p, Dimen systemDimens) {
         double tc = Double.POSITIVE_INFINITY;
         double x0 = p.getPosition().getX();
+        MovementTowards movementTowards = MovementTowards.STILL;
         if (p.getVelocity().getxSpeed() > 0 && x0 < systemDimens.getApertureX()) {
-            tc = Mru.timeCalculation(x0, systemDimens.getApertureX() - p.getRadius(), p.getVelocity().getxSpeed());
-        } else if (p.getVelocity().getxSpeed() < 0 && p.getPosition().getX() > systemDimens.getApertureX()) {
-            tc = Mru.timeCalculation(x0, systemDimens.getApertureX() + p.getRadius(), p.getVelocity().getxSpeed());
+            tc = Mru.timeCalculation(x0, systemDimens.getApertureX(), p.getVelocity().getxSpeed());
+            movementTowards = MovementTowards.RIGHT;
+        } else if (p.getVelocity().getxSpeed() < 0 && x0 > systemDimens.getApertureX()) {
+            tc = Mru.timeCalculation(x0, systemDimens.getApertureX(), p.getVelocity().getxSpeed());
+            movementTowards = MovementTowards.LEFT;
         }
 
-        return tc != Double.POSITIVE_INFINITY ?
-                (this.getParticlePosByTime(tc, p).getX() >= 0.4 && this.getParticlePosByTime(tc, p).getX() <= 0.5) ?
-                        tc : Double.POSITIVE_INFINITY : tc;
+        return new Pair<>(tc != Double.POSITIVE_INFINITY ?
+                (this.getParticlePosByTime(tc, p).getY() > systemDimens.getApertureYvi() && this.getParticlePosByTime(tc, p).getY() < systemDimens.getApertureYvf()) ?
+                        tc : Double.POSITIVE_INFINITY : tc, movementTowards);
     }
 
     public double collisionTimeWithIntermediateWall(Particle p, Dimen systemDimens) {
@@ -129,18 +133,19 @@ public final class Equations {
         return tcAux;
     }
 
-    public Pair<Double, Double> getParticleProportion(Collection<Particle> particles, Dimen systemDimens){
+    public Pair<Double, Double> getParticleProportion(Collection<Particle> particles, Dimen systemDimens) {
         double left = 0;
         double size = particles.size();
-        for(Particle particle: particles){
-            if(particle.getPosition().getX() <= systemDimens.getApertureX()){
-                left +=1;
+        for (Particle particle : particles) {
+            if (particle.getPosition().getX() <= systemDimens.getApertureX()) {
+                left += 1;
             }
         }
-        return new Pair<Double,Double>(left/size,(size-left)/size);
+        return new Pair<Double, Double>(left / size, (size - left) / size);
     }
 
-    private double collisionTimeWithWall(double iWall, double fWall, double partPos, double partRadius, double partSpeed) {
+    private double collisionTimeWithWall(double iWall, double fWall, double partPos, double partRadius,
+                                         double partSpeed) {
         double tc;
         if (partSpeed > 0) {
             tc = Mru.timeCalculation(partPos, fWall - partRadius, partSpeed);
