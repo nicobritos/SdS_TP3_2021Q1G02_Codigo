@@ -1,18 +1,20 @@
 package ar.edu.itba.sds_2021_q1_g02.models;
 
+import javafx.util.Pair;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
 public class Step {
-    private final TreeMap<Double, Set<Event>> nextEvents;
+    private final TreeMap<Double, EventCollection> nextEvents;
     private final double deltaTime;
     private final double absoluteTime;
     private final double leftOccupationFactor;
     private final int particlesOnLeftSide;
     private final int step;
 
-    public Step(TreeMap<Double, Set<Event>> nextEvents, double deltaTime, double absoluteTime, int step, int particleCount, int particlesOnLeftSide) {
+    public Step(TreeMap<Double, EventCollection> nextEvents, double deltaTime, double absoluteTime, int step, int particleCount, int particlesOnLeftSide) {
         this.nextEvents = nextEvents;
         this.deltaTime = deltaTime;
         this.absoluteTime = absoluteTime;
@@ -22,10 +24,10 @@ public class Step {
         if (particlesOnLeftSide == 0)
             this.leftOccupationFactor = 0;
         else
-            this.leftOccupationFactor = ((double) particleCount) / particlesOnLeftSide;
+            this.leftOccupationFactor = particlesOnLeftSide / ((double) particleCount);
     }
 
-    public TreeMap<Double, Set<Event>> getNextEvents() {
+    public TreeMap<Double, EventCollection> getNextEvents() {
         return this.nextEvents;
     }
 
@@ -41,8 +43,8 @@ public class Step {
         return this.step;
     }
 
-    public Map.Entry<Double, Set<Event>> getFirstEvents() {
-        Map.Entry<Double, Set<Event>> firstEvents;
+    public Map.Entry<Double, EventCollection> getFirstEvents() {
+        Map.Entry<Double, EventCollection> firstEvents;
 
         do {
             firstEvents = this.nextEvents.firstEntry();
@@ -50,10 +52,10 @@ public class Step {
                 return null;
 
             this.removeStaleEvents(firstEvents.getValue());
-            if (firstEvents.getValue().isEmpty()) {
+            if (firstEvents.getValue().getPriorityEvents().isEmpty() && firstEvents.getValue().getOtherEvents().isEmpty()) {
                 this.nextEvents.remove(firstEvents.getKey());
             }
-        } while (firstEvents.getValue().isEmpty());
+        } while (firstEvents.getValue().getPriorityEvents().isEmpty() && firstEvents.getValue().getOtherEvents().isEmpty());
 
         return firstEvents;
     }
@@ -66,10 +68,8 @@ public class Step {
         return this.particlesOnLeftSide;
     }
 
-    private void removeStaleEvents(Set<Event> events) {
-        int step = this.step;
-        events.removeIf(event -> {
-            return !event.isValid();
-        });
+    private void removeStaleEvents(EventCollection events) {
+        events.getPriorityEvents().removeIf(event -> !event.isValid());
+        events.getOtherEvents().removeIf(event -> !event.isValid());
     }
 }
