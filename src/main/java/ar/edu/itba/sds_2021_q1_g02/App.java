@@ -1,6 +1,7 @@
 package ar.edu.itba.sds_2021_q1_g02;
 
 import ar.edu.itba.sds_2021_q1_g02.models.Color;
+import ar.edu.itba.sds_2021_q1_g02.models.Configuration;
 import ar.edu.itba.sds_2021_q1_g02.models.Dimen;
 import ar.edu.itba.sds_2021_q1_g02.models.Particle;
 import ar.edu.itba.sds_2021_q1_g02.parsers.CommandParser;
@@ -15,6 +16,8 @@ import java.io.IOException;
 import java.util.List;
 
 public class App {
+    private final static double OCCUPATION_FACTOR_TOLERANCE = 0.01;
+
     public static void main(String[] args) throws ParseException, IOException {
         CommandParser.getInstance().parse(args);
 
@@ -22,11 +25,11 @@ public class App {
         Pair<List<Particle>, Integer> particles = ParticleParser.parseParticles(CommandParser.getInstance().getInputPath());
 
         Dimen dimen = new Dimen(0, 0.24, 0, 0.09, 0.01);
-        GasDiffusion GD = new GasDiffusion(particles.getKey(), dimen);
+        GasDiffusion GD = new GasDiffusion(particles.getKey(), new Configuration(dimen, OCCUPATION_FACTOR_TOLERANCE));
 
         GD.addSerializer(new OvitoSerializer(
-                (systemParticles, step, dt, abs) -> (systemParticles.size() + 2) + "\n" + "Properties=id:R:1:radius:R:1:pos:R:2:Velocity:R:2:mass:R:1:color:R:3:transparency:R:1",
-                (particle, step, dt, abs) -> {
+                (systemParticles, step) -> (systemParticles.size() + 2) + "\n" + "Properties=id:R:1:radius:R:1:pos:R:2:Velocity:R:2:mass:R:1:color:R:3:transparency:R:1",
+                (particle, step) -> {
                     // id (1), radius (1), pos (2), size (1), color (3, RGB)";
                     String s = particle.getId() + "\t" +
                             particle.getRadius() + "\t" +
@@ -53,8 +56,8 @@ public class App {
         ));
 
         GD.addSerializer(new CSVSerializer(
-                (systemParticles, step, dt, abs) -> "id;\"radius [m]\";\"x [m]\";\"y [m]\";\"mass [kg]\";\"vx [m/s]\";\"vy [m/s]\";\"dt [s]\";\"t [s]\"",
-                (particle, step, dt, abs) -> {
+                (systemParticles, step) -> "id;\"radius [m]\";\"x [m]\";\"y [m]\";\"mass [kg]\";\"vx [m/s]\";\"vy [m/s]\";\"dt [s]\";\"t [s]\";fp",
+                (particle, step) -> {
                     // id (1), radius (1), pos (2), size (1), speed (2), dt (1), t (1)";
                     return  particle.getId() + ";" +
                             particle.getRadius() + ";" +
@@ -63,26 +66,28 @@ public class App {
                             particle.getMass() + ";" +
                             particle.getVelocity().getxSpeed() + ";" +
                             particle.getVelocity().getySpeed() + ";" +
-                            dt + ";" +
-                            abs;
+                            step.getRelativeTime() + ";" +
+                            step.getAbsoluteTime() + ";" +
+                            step.getLeftOccupationFactor();
                 },
                 step -> "output/output_" + step + ".csv"
         ));
 
         GD.addSerializer(new ConsoleSerializer(
-                (systemParticles, systemDimen) -> {
-                    return  "Height = " + String.format("%.5f", systemDimen.getYvf() - systemDimen.getYvi()) +
-                            "m; Width = " + String.format("%.5f", systemDimen.getXvf() - systemDimen.getXvi()) +
-                            "m; Aperture size = " + String.format("%.5f", systemDimen.getApertureYvf() - systemDimen.getApertureYvi()) +
-                            "m; Aperture X position = " + String.format("%.5f", systemDimen.getApertureX()) +
-                            "m";
+                (systemParticles, configuration) -> {
+                    return  "Height = " + String.format("%.5f", configuration.getDimen().getYvf() - configuration.getDimen().getYvi()) +
+                            "m; Width = " + String.format("%.5f", configuration.getDimen().getXvf() - configuration.getDimen().getXvi()) +
+                            "m; Aperture size = " + String.format("%.5f", configuration.getDimen().getApertureYvf() - configuration.getDimen().getApertureYvi()) +
+                            "m; Aperture X position = " + String.format("%.5f", configuration.getDimen().getApertureX()) +
+                            "m; Occupation factor tolerance = " + String.format("%.5f", configuration.getOccupationFactor());
                 },
-                (stepParticles, step, dt, absoluteTime) -> {
+                (stepParticles, step) -> {
                     return "** Step = " + step +
-                            " dT = " + String.format("%.5fs", dt) +
-                            " abs = " + String.format("%.5fs", absoluteTime);
+                            "; dT = " + String.format("%.5fs", step.getRelativeTime()) +
+                            "; abs = " + String.format("%.5fs", step.getAbsoluteTime()) +
+                            "; fp = " + String.format("%.5fs", step.getLeftOccupationFactor());
                 },
-                (particle, step, dt, abs) -> {
+                (particle, step) -> {
                     return particle.getId() + " | " +
                         String.format("(%.5f, %.5f)m", particle.getPosition().getX(), particle.getPosition().getY()) + " | " +
                         String.format("(%.5f, %.5f)m/s", particle.getVelocity().getxSpeed(), particle.getVelocity().getySpeed());

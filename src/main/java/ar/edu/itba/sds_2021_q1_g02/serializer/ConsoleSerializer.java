@@ -1,7 +1,9 @@
 package ar.edu.itba.sds_2021_q1_g02.serializer;
 
+import ar.edu.itba.sds_2021_q1_g02.models.Configuration;
 import ar.edu.itba.sds_2021_q1_g02.models.Dimen;
 import ar.edu.itba.sds_2021_q1_g02.models.Particle;
+import ar.edu.itba.sds_2021_q1_g02.models.Step;
 
 import java.util.Collection;
 
@@ -19,17 +21,17 @@ public class ConsoleSerializer implements Serializer {
     }
 
     @Override
-    public void serializeSystem(Collection<Particle> particles, Dimen systemDimen) {
-        System.out.println(this.systemFormatter.format(particles, systemDimen));
+    public void serializeSystem(Collection<Particle> particles, Configuration configuration) {
+        System.out.println(this.systemFormatter.format(particles, configuration));
     }
 
     @Override
-    public void serialize(Collection<Particle> particles, int step, double dt, double absoluteTime) {
-        System.out.println(this.stepFormatter.format(particles, step, dt, absoluteTime));
+    public void serialize(Collection<Particle> particles, Step step) {
+        System.out.println(this.stepFormatter.format(particles, step));
 
         if (particles.size() < CONSOLE_SERIALIZER_LIMIT) {
             for (Particle p : particles) {
-                System.out.println(this.particleFormatter.format(p, step, dt, absoluteTime));
+                System.out.println(this.particleFormatter.format(p, step));
             }
         }
 
