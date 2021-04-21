@@ -106,9 +106,13 @@ public final class Equations {
             movementTowards = MovementTowards.LEFT;
         }
 
-        return new Pair<>(tc != Double.POSITIVE_INFINITY ?
-                (this.getParticlePosByTime(tc, p).getY() > systemDimens.getApertureYvi() && this.getParticlePosByTime(tc, p).getY() < systemDimens.getApertureYvf()) ?
-                        tc : Double.POSITIVE_INFINITY : tc, movementTowards);
+        if (tc != Double.POSITIVE_INFINITY) {
+            Position particlePosition = this.getParticlePosByTime(tc, p);
+            return new Pair<>((particlePosition.getY() > systemDimens.getApertureYvi() && particlePosition.getY() < systemDimens.getApertureYvf()) ?
+                    tc : Double.POSITIVE_INFINITY, movementTowards);
+        } else {
+            return new Pair<>(tc, movementTowards);
+        }
     }
 
     public double collisionTimeWithIntermediateWall(Particle p, Dimen systemDimens) {
