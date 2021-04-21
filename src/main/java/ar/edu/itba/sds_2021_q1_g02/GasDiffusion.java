@@ -141,7 +141,8 @@ public class GasDiffusion {
     private Set<Event> getEvent(Particle particle, double absoluteTime, int step) {
         Pair<Double, Direction> wallCollision = Equations.getInstance().collisionWall(particle, this.dimen);
         Pair<Double, Particle> particleCollision = Equations.getInstance().collisionParticles(particle, this.particles);
-        Pair<Double, MovementTowards> goThroughAperture = Equations.getInstance().goThroughApertureTime(particle, this.dimen);
+        Pair<Double, MovementTowards> goThroughAperture = Equations.getInstance().goThroughApertureTime(particle,
+                this.dimen);
 
         Set<Event> events = new HashSet<>();
         if (wallCollision.getKey() != Double.POSITIVE_INFINITY)
