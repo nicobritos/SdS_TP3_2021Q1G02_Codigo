@@ -6,7 +6,7 @@ import os.path
 def print_row(row, file_path):
     ovito = open(file_path, "a")
     
-    ovito.write(row[0] +'\t'+row[1]+'\t'+row[2]+'\t'+row[3]+'\t'+row[4]+'\t'+row[5]+'\t'+row[6]+'\n')
+    ovito.write(row[0] +'\t'+row[1]+'\t'+row[2]+'\t'+row[3]+'\t'+row[4]+'\t'+row[5]+'\t'+row[6]+'\t'+'0'+'\t'+'250'+'\t'+'250'+'\n')
 
     ovito.close()
 
@@ -26,24 +26,24 @@ def print_walls(file_path, ids, aperture):
     xp=0
     for x in range(w):
         ids += 1
-        ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(xp)+'\t'+str(0)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\n')
+        ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(xp)+'\t'+str(0)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\t'+'250'+'\t'+'250'+'\t'+'250'+'\n')
         ids += 1
-        ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(xp)+'\t'+str(0.09)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\n')
+        ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(xp)+'\t'+str(0.09)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\t'+'250'+'\t'+'250'+'\t'+'250'+'\n')
         xp +=(radius *2)
     yp=0
     for y in range(h):
         ids += 1
-        ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(0)+'\t'+str(yp)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\n')
+        ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(0)+'\t'+str(yp)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\t'+'250'+'\t'+'250'+'\t'+'250'+'\n')
         ids += 1
-        ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(0.24)+'\t'+str(yp)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\n')
+        ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(0.24)+'\t'+str(yp)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\t'+'250'+'\t'+'250'+'\t'+'250'+'\n')
         yp+=radius* 2
     yp = 0
     for y in range(hmw):
         x = 0.12
         ids += 1
-        ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(x)+'\t'+str(yp)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\n')
+        ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(x)+'\t'+str(yp)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\t'+'250'+'\t'+'250'+'\t'+'250'+'\n')
         ids += 1
-        ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(x)+'\t'+str(0.09 - yp)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\n')
+        ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(x)+'\t'+str(0.09 - yp)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\t'+'250'+'\t'+'250'+'\t'+'250'+'\n')
         yp+=radius* 2
     ovito.close()
 
