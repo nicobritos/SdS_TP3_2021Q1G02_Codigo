@@ -82,10 +82,10 @@ public class App {
                             "m; Occupation factor tolerance = " + String.format("%.5f", configuration.getOccupationFactor());
                 },
                 (stepParticles, step) -> {
-                    return "** Step = " + step +
+                    return "** Step = " + step.getStep() +
                             "; dT = " + String.format("%.5fs", step.getRelativeTime()) +
                             "; abs = " + String.format("%.5fs", step.getAbsoluteTime()) +
-                            "; fp = " + String.format("%.5fs", step.getLeftOccupationFactor());
+                            "; fp = " + String.format("%.5f", step.getLeftOccupationFactor());
                 },
                 (particle, step) -> {
                     return particle.getId() + " | " +
