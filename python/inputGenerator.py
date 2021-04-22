@@ -13,8 +13,8 @@ import glob
 def parse_args():
     # Get the total number of args passed
     total = len(sys.argv)
-    if total != 2:
-        print("1 argument needed, qty of particles (int)")
+    if total != 3:
+        print("2 arguments needed, qty of particles (int), 2.velocity of particles")
         quit()
 
     n = int(sys.argv[1])
@@ -24,7 +24,7 @@ def parse_args():
     return n
 
 
-def generate(file_path, count):
+def generate(file_path, count, velocity):
     input = open(file_path, "w")
     w = 40  #0.12  w= 0.12 / 0.0030
     h = 30 #0.09   h=0.09/0.0030
@@ -52,11 +52,11 @@ def generate(file_path, count):
                 input.write(str(round(radius + y*2*radius,4)))
                 input.write('\t')
                 # vx 
-                vx = round(random.uniform(-0.01, 0.01),4)
+                vx = round(random.uniform(-velocity, velocity),4)
                 input.write(str(vx))
                 input.write('\t')
                 # vy
-                vy = round(math.sqrt(0.01**2 - vx**2),4)
+                vy = round(math.sqrt(velocity**2 - vx**2),4)
                 input.write(str(vy))
                 input.write('\t')
 
@@ -68,7 +68,7 @@ def generate(file_path, count):
 def main():
     n= parse_args()
     file_path = 'input.txt'
-    generate(file_path, n)
+    generate(file_path, n, float(sys.argv[2]))
     
 
 if __name__ == '__main__':
