@@ -10,6 +10,7 @@ public class GasDiffusion {
     private final Configuration configuration;
     private final List<Particle> particles;
     private final List<Serializer> serializers;
+    private Double systemPressure = Double.POSITIVE_INFINITY;
 
     public GasDiffusion(List<Particle> particles, Configuration configuration) {
         this.particles = particles;
@@ -27,15 +28,24 @@ public class GasDiffusion {
         this.serialize(step);
 
         while (step.getStep() < maxIterations && !this.halfOccupationFactor(step)) {
-            step = this.simulateStep(step);
+            step = this.simulateStep(step, false);
             if (step == null)
                 return;
 
             this.serialize(step);
         }
+
+        if (this.halfOccupationFactor(step)) {
+            double t = step.getAbsoluteTime() + this.configuration.getDt();
+            while (step.getAbsoluteTime() < t) {
+                step = this.simulateStep(step, true);
+                if (step == null)
+                    return;
+            }
+        }
     }
 
-    private Step simulateStep(Step previousStep) {
+    private Step simulateStep(Step previousStep, boolean inEquilibrium) {
         Map.Entry<Double, EventCollection> firstEvents = previousStep.getFirstEvents();
         if (firstEvents == null)
             return null;
@@ -51,10 +61,30 @@ public class GasDiffusion {
             particlesOnLeftSide += this.processEvent(event);
         }
 
+        if (inEquilibrium) {
+            for (Event event : firstEvents.getValue()) {
+                if (event.getParticle().getPosition().getX() < this.configuration.getDimen().getApertureX()) {
+                    if (event.getEventType().equals(EventType.COLLISION_WITH_WALL)) {
+                        if (((CollisionWithWallEvent) event).getWallDirection().equals(Direction.VERTICAL) && event.getParticle().getVelocity().getxSpeed() > 0) {
+                            // CHOQUE CONTRA LA PARED VERTICAL EN X=0
+                            double finalSpeed = event.getParticle().getVelocity().getxSpeed();
+                            double initSpeed = - finalSpeed;
+                            double d = this.configuration.getDimen().getYvf() - this.configuration.getDimen().getYvi();
+                            if (this.systemPressure == Double.POSITIVE_INFINITY) this.systemPressure = 0.0;
+                            this.systemPressure += Pressure.calculate(initSpeed, finalSpeed,
+                                    event.getParticle().getMass(), this.configuration.getDt(), d);
+                        }
+                    }
+                }
+            }
+        }
+
+
         // Copiamos el mapa y no iteramos sobre el mismo set para no
         // eliminar el mismo evento mientras se itera
         for (Map.Entry<Double, EventCollection> entry : previousStep.getNextEvents().entrySet()) {
-            newNextEvents.put(entry.getKey(), new EventCollection(new HashSet<>(entry.getValue().getPriorityEvents()), new HashSet<>(entry.getValue().getOtherEvents())));
+            newNextEvents.put(entry.getKey(), new EventCollection(new HashSet<>(entry.getValue().getPriorityEvents())
+                    , new HashSet<>(entry.getValue().getOtherEvents())));
         }
 
         EventCollection newNextEvent = newNextEvents.get(firstEvents.getKey());
@@ -62,7 +92,8 @@ public class GasDiffusion {
             this.postProcessEvent(newNextEvents, previousStep.getParticleEvents(), newNextEvent, event, absoluteTime);
         }
 
-        return new Step(newNextEvents, previousStep.getParticleEvents(), absoluteTime - previousStep.getAbsoluteTime(), absoluteTime,
+        return new Step(newNextEvents, previousStep.getParticleEvents(),
+                absoluteTime - previousStep.getAbsoluteTime(), absoluteTime,
                 previousStep.getStep() + 1, this.particles.size(), particlesOnLeftSide);
     }
 
@@ -89,7 +120,8 @@ public class GasDiffusion {
         return new Step(nextEvents, particleEvents, 0, 0, 0, this.particles.size(), this.particles.size());
     }
 
-    private void postProcessEvent(Map<Double, EventCollection> eventMap, Map<Particle, Set<Event>> particleMap, EventCollection events, Event event, double absoluteTime) {
+    private void postProcessEvent(Map<Double, EventCollection> eventMap, Map<Particle, Set<Event>> particleMap,
+                                  EventCollection events, Event event, double absoluteTime) {
         // El evento ya paso
         events.remove(event);
         if (event.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
@@ -112,7 +144,8 @@ public class GasDiffusion {
         }
 
         if (event.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
-            EventCollection newOtherEvents = this.getEvent(((CollisionWithParticleEvent) event).getOtherParticle(), absoluteTime);
+            EventCollection newOtherEvents = this.getEvent(((CollisionWithParticleEvent) event).getOtherParticle(),
+                    absoluteTime);
 
             for (Event newOtherEvent : newOtherEvents) {
                 if (newOtherEvent.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
@@ -128,7 +161,8 @@ public class GasDiffusion {
         }
     }
 
-    private void processVoidedEvents(Map<Double, EventCollection> eventMap, Map<Particle, Set<Event>> particleMap, Particle particle, double absoluteTime) {
+    private void processVoidedEvents(Map<Double, EventCollection> eventMap, Map<Particle, Set<Event>> particleMap,
+                                     Particle particle, double absoluteTime) {
         Set<Event> voidedEvents = particleMap.get(particle);
         if (voidedEvents != null) {
             particleMap.remove(particle);
@@ -141,7 +175,8 @@ public class GasDiffusion {
         }
     }
 
-    private void insertEventInMap(Map<Double, EventCollection> eventMap, Map<Particle, Set<Event>> particleMap, Event event) {
+    private void insertEventInMap(Map<Double, EventCollection> eventMap, Map<Particle, Set<Event>> particleMap,
+                                  Event event) {
         EventCollection eventCollection = eventMap.computeIfAbsent(event.getTime(), time -> new EventCollection());
         Set<Event> particleEvents = particleMap.computeIfAbsent(event.getParticle(), time -> new HashSet<>());
 
@@ -154,7 +189,8 @@ public class GasDiffusion {
 
         if (event.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
             CollisionWithParticleEvent collisionEvent = (CollisionWithParticleEvent) event;
-            Set<Event> otherParticleEvents = particleMap.computeIfAbsent(collisionEvent.getOtherParticle(), time -> new HashSet<>());
+            Set<Event> otherParticleEvents = particleMap.computeIfAbsent(collisionEvent.getOtherParticle(),
+                    time -> new HashSet<>());
 
             otherParticleEvents.remove(event);
             otherParticleEvents.add(event);
@@ -163,6 +199,7 @@ public class GasDiffusion {
 
     /**
      * Returns how much particles left or returned to the left enclosure
+     *
      * @param event
      * @return
      */
@@ -181,9 +218,11 @@ public class GasDiffusion {
     }
 
     private EventCollection getEvent(Particle particle, double absoluteTime) {
-        Pair<Double, Direction> wallCollision = Equations.getInstance().collisionWall(particle, this.configuration.getDimen());
+        Pair<Double, Direction> wallCollision = Equations.getInstance().collisionWall(particle,
+                this.configuration.getDimen());
         Pair<Double, Particle> particleCollision = Equations.getInstance().collisionParticles(particle, this.particles);
-        Pair<Double, MovementTowards> goThroughAperture = Equations.getInstance().goThroughApertureTime(particle, this.configuration.getDimen());
+        Pair<Double, MovementTowards> goThroughAperture = Equations.getInstance().goThroughApertureTime(particle,
+                this.configuration.getDimen());
 
         EventCollection eventCollection = new EventCollection();
         if (wallCollision.getKey() != Double.POSITIVE_INFINITY)

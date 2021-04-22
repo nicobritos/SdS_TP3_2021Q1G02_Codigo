@@ -98,17 +98,17 @@ public final class Equations {
         double tc = Double.POSITIVE_INFINITY;
         double x0 = p.getPosition().getX();
         MovementTowards movementTowards = MovementTowards.STILL;
-        if (p.getVelocity().getxSpeed() > 0 && x0 < systemDimens.getApertureX()) {
-            tc = Mru.timeCalculation(x0, systemDimens.getApertureX(), p.getVelocity().getxSpeed());
+        if (p.getVelocity().getxSpeed() > 0 && x0 < systemDimens.getApertureX() - p.getRadius() - 0.00000001) {
+            tc = Mru.timeCalculation(x0, systemDimens.getApertureX() - p.getRadius(), p.getVelocity().getxSpeed());
             movementTowards = MovementTowards.RIGHT;
-        } else if (p.getVelocity().getxSpeed() < 0 && x0 > systemDimens.getApertureX()) {
-            tc = Mru.timeCalculation(x0, systemDimens.getApertureX(), p.getVelocity().getxSpeed());
+        } else if (p.getVelocity().getxSpeed() < 0 && x0 > systemDimens.getApertureX() + p.getRadius() + 0.00000001) {
+            tc = Mru.timeCalculation(x0, systemDimens.getApertureX() + p.getRadius(), p.getVelocity().getxSpeed());
             movementTowards = MovementTowards.LEFT;
         }
 
         if (tc != Double.POSITIVE_INFINITY) {
             Position particlePosition = this.getParticlePosByTime(tc, p);
-            return new Pair<>((particlePosition.getY() > systemDimens.getApertureYvi() && particlePosition.getY() < systemDimens.getApertureYvf()) ?
+            return new Pair<>((particlePosition.getY() >= systemDimens.getApertureYvi() && particlePosition.getY() <= systemDimens.getApertureYvf()) ?
                     tc : Double.POSITIVE_INFINITY, movementTowards);
         } else {
             return new Pair<>(tc, movementTowards);
@@ -184,7 +184,8 @@ public final class Equations {
     }
     // Tita solo se usa en colisiones, entonces se puede usar pitagoras (y es mas preciso)
 //    private double titaSquared(Particle p1, Particle p2) {
-//        return Math.pow(p1.getPosition().getX() - p2.getPosition().getX(), 2) + Math.pow(p1.getPosition().getY() - p2.getPosition().getY(), 2);
+//        return Math.pow(p1.getPosition().getX() - p2.getPosition().getX(), 2) + Math.pow(p1.getPosition().getY() -
+//        p2.getPosition().getY(), 2);
 //    }
 
     private double deltaVTimesdeltaV(Particle p1, Particle p2) {
