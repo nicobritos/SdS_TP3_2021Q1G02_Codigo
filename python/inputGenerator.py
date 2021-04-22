@@ -14,20 +14,21 @@ def parse_args():
     # Get the total number of args passed
     total = len(sys.argv)
     if total != 2:
-        print("1 argument needed, percentage of particles (float)")
+        print("1 argument needed, qty of particles (int)")
         quit()
 
-    percentage = float(sys.argv[1]) / 100
+    n = int(sys.argv[1])
+    if n <= 2 or n >= 2000:
+        raise 'n is too small or too large'
 
-    return percentage
+    return n
 
 
-def generate(file_path, percentage):
+def generate(file_path, count):
     input = open(file_path, "w")
     w = 40  #0.12  w= 0.12 / 0.0030
     h = 30 #0.09   h=0.09/0.0030
     radius = 0.0015
-    count = math.ceil(w * h * percentage)
     input.write(str(count))
     input.write('\n')
     present = {}
@@ -65,10 +66,9 @@ def generate(file_path, percentage):
 
 
 def main():
-    
-    percentage= parse_args()
+    n= parse_args()
     file_path = 'input.txt'
-    generate(file_path, percentage)
+    generate(file_path, n)
     
 
 if __name__ == '__main__':

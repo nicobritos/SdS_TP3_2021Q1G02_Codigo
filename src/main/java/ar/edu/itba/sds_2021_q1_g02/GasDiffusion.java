@@ -99,7 +99,6 @@ public class GasDiffusion {
             if (collisionEvent.hasCollided()) {
                 // Tenemos que recalcular todos los eventos en donde las particulas que participaron
                 // en la colision participen como "otherParticle"
-//                this.processVoidedEvents(step, collisionEvent.getParticle());
                 this.processVoidedEvents(eventMap, particleMap, collisionEvent.getOtherParticle(), absoluteTime);
             }
         }
