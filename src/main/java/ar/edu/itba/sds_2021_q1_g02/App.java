@@ -39,7 +39,7 @@ public class App {
                             particle.getVelocity().getySpeed() + "\t" +
                             particle.getMass() + "\t";
 
-                    if (particle.getRadius() > 0) {
+                    if (particle.getId() > 0) {
                         Color color = getParticleColor(particle, dimen);
                         s += color.getRed() + "\t" +
                                 color.getGreen() + "\t" +
@@ -51,7 +51,7 @@ public class App {
 
                     return s;
                 },
-                step -> "output/output_" + step + ".xyz",
+                step -> "R:/output/output_" + step + ".xyz",
                 dimen
         ));
 
@@ -70,7 +70,7 @@ public class App {
                             step.getAbsoluteTime() + ";" +
                             step.getLeftOccupationFactor();
                 },
-                step -> "output/output_" + step + ".csv"
+                step -> "R:/output/output_" + step + ".csv"
         ));
 
         GD.addSerializer(new ConsoleSerializer(

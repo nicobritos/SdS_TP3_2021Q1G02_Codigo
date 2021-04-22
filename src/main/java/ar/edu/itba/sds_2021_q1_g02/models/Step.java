@@ -1,21 +1,22 @@
 package ar.edu.itba.sds_2021_q1_g02.models;
 
-import javafx.util.Pair;
-
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
 public class Step {
     private final TreeMap<Double, EventCollection> nextEvents;
+    private final Map<Particle, Set<Event>> particleEvents;
     private final double deltaTime;
     private final double absoluteTime;
     private final double leftOccupationFactor;
     private final int particlesOnLeftSide;
     private final int step;
 
-    public Step(TreeMap<Double, EventCollection> nextEvents, double deltaTime, double absoluteTime, int step, int particleCount, int particlesOnLeftSide) {
+    public Step(TreeMap<Double, EventCollection> nextEvents, Map<Particle, Set<Event>> particleEvents, double deltaTime, double absoluteTime, int step, int particleCount, int particlesOnLeftSide) {
         this.nextEvents = nextEvents;
+        this.particleEvents = particleEvents;
         this.deltaTime = deltaTime;
         this.absoluteTime = absoluteTime;
         this.step = step;
@@ -29,6 +30,10 @@ public class Step {
 
     public TreeMap<Double, EventCollection> getNextEvents() {
         return this.nextEvents;
+    }
+
+    public Map<Particle, Set<Event>> getParticleEvents() {
+        return this.particleEvents;
     }
 
     public double getRelativeTime() {
@@ -69,7 +74,25 @@ public class Step {
     }
 
     private void removeStaleEvents(EventCollection events) {
-        events.getPriorityEvents().removeIf(event -> !event.isValid());
-        events.getOtherEvents().removeIf(event -> !event.isValid());
+        Iterator<Event> iterator = events.iterator();
+        while (iterator.hasNext()) {
+            Event event = iterator.next();
+            if (!event.isValid()) {
+                iterator.remove();
+
+                this.removeStaleParticleEvent(event.getParticle(), event);
+                if (event.getEventType().equals(EventType.COLLISION_WITH_PARTICLE))
+                    this.removeStaleParticleEvent(((CollisionWithParticleEvent) event).getOtherParticle(), event);
+            }
+        }
+    }
+
+    private void removeStaleParticleEvent(Particle particle, Event event) {
+        Set<Event> collection = this.particleEvents.get(particle);
+        if (collection != null) {
+            collection.remove(event);
+            if (collection.isEmpty())
+                this.particleEvents.remove(particle);
+        }
     }
 }

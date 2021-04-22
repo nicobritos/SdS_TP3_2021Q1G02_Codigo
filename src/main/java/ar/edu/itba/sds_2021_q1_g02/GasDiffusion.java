@@ -59,47 +59,61 @@ public class GasDiffusion {
 
         EventCollection newNextEvent = newNextEvents.get(firstEvents.getKey());
         for (Event event : firstEvents.getValue()) {
-            this.postProcessEvent(newNextEvents, newNextEvent, event, absoluteTime, previousStep.getStep());
+            this.postProcessEvent(newNextEvents, previousStep.getParticleEvents(), newNextEvent, event, absoluteTime);
         }
 
-        return new Step(newNextEvents, absoluteTime - previousStep.getAbsoluteTime(), absoluteTime,
+        return new Step(newNextEvents, previousStep.getParticleEvents(), absoluteTime - previousStep.getAbsoluteTime(), absoluteTime,
                 previousStep.getStep() + 1, this.particles.size(), particlesOnLeftSide);
     }
 
     private Step calculateFirstStep() {
         TreeMap<Double, EventCollection> nextEvents = new TreeMap<>();
+        Map<Particle, Set<Event>> particleEvents = new HashMap<>();
 
         // Put eventos
         for (Particle p : this.particles) {
-            EventCollection eventCollection = this.getEvent(p, 0, 0);
+            EventCollection eventCollection = this.getEvent(p, 0);
             if (eventCollection.isEmpty())
                 continue;
 
             for (Event event : eventCollection) {
                 nextEvents.computeIfAbsent(event.getTime(), time -> new EventCollection()).add(event);
+                if (event.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
+                    CollisionWithParticleEvent collisionEvent = (CollisionWithParticleEvent) event;
+
+                    particleEvents.computeIfAbsent(collisionEvent.getOtherParticle(), particle -> new HashSet<>()).add(collisionEvent);
+                }
             }
         }
 
-        return new Step(nextEvents, 0, 0, 0, this.particles.size(), this.particles.size());
+        return new Step(nextEvents, particleEvents, 0, 0, 0, this.particles.size(), this.particles.size());
     }
 
-    private void postProcessEvent(Map<Double, EventCollection> eventMap, EventCollection events, Event event, double absoluteTime, int step) {
+    private void postProcessEvent(Map<Double, EventCollection> eventMap, Map<Particle, Set<Event>> particleMap, EventCollection events, Event event, double absoluteTime) {
         // El evento ya paso
         events.remove(event);
         if (event.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
-            events.remove(((CollisionWithParticleEvent) event).getInverse());
+            CollisionWithParticleEvent collisionEvent = (CollisionWithParticleEvent) event;
+
+            events.remove(collisionEvent.getInverse());
+            if (collisionEvent.hasCollided()) {
+                // Tenemos que recalcular todos los eventos en donde las particulas que participaron
+                // en la colision participen como "otherParticle"
+//                this.processVoidedEvents(step, collisionEvent.getParticle());
+                this.processVoidedEvents(eventMap, particleMap, collisionEvent.getOtherParticle(), absoluteTime);
+            }
         }
         if (events.isEmpty())
             eventMap.remove(event.getTime());
 
         // Recalculamos proximos eventos de las particulas colisionadas
-        EventCollection newEvents = this.getEvent(event.getParticle(), absoluteTime, step);
+        EventCollection newEvents = this.getEvent(event.getParticle(), absoluteTime);
         for (Event newEvent : newEvents) {
-            this.insertEventInMap(eventMap, newEvent);
+            this.insertEventInMap(eventMap, particleMap, newEvent);
         }
 
         if (event.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
-            EventCollection newOtherEvents = this.getEvent(((CollisionWithParticleEvent) event).getOtherParticle(), absoluteTime, step);
+            EventCollection newOtherEvents = this.getEvent(((CollisionWithParticleEvent) event).getOtherParticle(), absoluteTime);
 
             for (Event newOtherEvent : newOtherEvents) {
                 if (newOtherEvent.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
@@ -109,19 +123,43 @@ public class GasDiffusion {
                 }
 
                 if (!newEvents.contains(newOtherEvent)) {
-                    this.insertEventInMap(eventMap, newOtherEvent);
+                    this.insertEventInMap(eventMap, particleMap, newOtherEvent);
                 }
             }
         }
     }
 
-    private void insertEventInMap(Map<Double, EventCollection> eventMap, Event event) {
+    private void processVoidedEvents(Map<Double, EventCollection> eventMap, Map<Particle, Set<Event>> particleMap, Particle particle, double absoluteTime) {
+        Set<Event> voidedEvents = particleMap.get(particle);
+        if (voidedEvents != null) {
+            particleMap.remove(particle);
+
+            for (Event event : voidedEvents) {
+                for (Event newEvent : this.getEvent(event.getParticle(), absoluteTime)) {
+                    this.insertEventInMap(eventMap, particleMap, newEvent);
+                }
+            }
+        }
+    }
+
+    private void insertEventInMap(Map<Double, EventCollection> eventMap, Map<Particle, Set<Event>> particleMap, Event event) {
         EventCollection eventCollection = eventMap.computeIfAbsent(event.getTime(), time -> new EventCollection());
+        Set<Event> particleEvents = particleMap.computeIfAbsent(event.getParticle(), time -> new HashSet<>());
 
         // Lo sacamos por si ya existe. Como hashcode no contempla el contador de colisiones
         // entonces no se va a agregar un evento valido
         eventCollection.remove(event);
+        particleEvents.remove(event);
         eventCollection.add(event);
+        particleEvents.add(event);
+
+        if (event.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
+            CollisionWithParticleEvent collisionEvent = (CollisionWithParticleEvent) event;
+            Set<Event> otherParticleEvents = particleMap.computeIfAbsent(collisionEvent.getOtherParticle(), time -> new HashSet<>());
+
+            otherParticleEvents.remove(event);
+            otherParticleEvents.add(event);
+        }
     }
 
     /**
@@ -134,19 +172,8 @@ public class GasDiffusion {
             return 0;
 
         // Colisionar
-        event.getParticle().increaseCollision();
-        if (event.getEventType().equals(EventType.COLLISION_WITH_WALL)) {
-            Velocity newVelocity = Equations.getInstance().evolveParticleVelocity(event.getParticle(),
-                    ((CollisionWithWallEvent) event).getWallDirection());
-            event.getParticle().setVelocity(newVelocity);
-        } else if (event.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
-            Pair<Velocity, Velocity> velocities =
-                    Equations.getInstance().evolveParticlesVelocities(event.getParticle(),
-                            ((CollisionWithParticleEvent) event).getOtherParticle());
-            event.getParticle().setVelocity(velocities.getKey());
-            ((CollisionWithParticleEvent) event).getOtherParticle().setVelocity(velocities.getValue());
-            ((CollisionWithParticleEvent) event).getOtherParticle().increaseCollision();
-        } else {
+        event.setCollided();
+        if (event.getEventType().equals(EventType.GO_THROUGH_APERTURE)) {
             MovementTowards movementTowards = ((GoThroughApertureEvent) event).getMovementTowards();
             return movementTowards.equals(MovementTowards.RIGHT) ? -1 : 1;
         }
@@ -154,7 +181,7 @@ public class GasDiffusion {
         return 0;
     }
 
-    private EventCollection getEvent(Particle particle, double absoluteTime, int step) {
+    private EventCollection getEvent(Particle particle, double absoluteTime) {
         Pair<Double, Direction> wallCollision = Equations.getInstance().collisionWall(particle, this.configuration.getDimen());
         Pair<Double, Particle> particleCollision = Equations.getInstance().collisionParticles(particle, this.particles);
         Pair<Double, MovementTowards> goThroughAperture = Equations.getInstance().goThroughApertureTime(particle, this.configuration.getDimen());

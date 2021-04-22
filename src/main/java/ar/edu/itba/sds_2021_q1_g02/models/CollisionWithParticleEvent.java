@@ -1,5 +1,7 @@
 package ar.edu.itba.sds_2021_q1_g02.models;
 
+import javafx.util.Pair;
+
 import java.util.Objects;
 
 public class CollisionWithParticleEvent extends Event {
@@ -25,6 +27,16 @@ public class CollisionWithParticleEvent extends Event {
 
     public int getCollisionCountParticle2() {
         return this.collisionCountParticle2;
+    }
+
+    @Override
+    public void setCollided() {
+        super.setCollided();
+
+        Pair<Velocity, Velocity> velocities = Equations.getInstance().evolveParticlesVelocities(this.particle, this.otherParticle);
+        this.particle.setVelocity(velocities.getKey());
+        this.otherParticle.setVelocity(velocities.getValue());
+        this.otherParticle.increaseCollision();
     }
 
     @Override

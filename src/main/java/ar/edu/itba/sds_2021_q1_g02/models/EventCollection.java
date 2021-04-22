@@ -59,6 +59,7 @@ public class EventCollection implements Iterable<Event> {
     private static class EventIterator implements Iterator<Event> {
         private final Iterator<Event> priorityIterator;
         private final Iterator<Event> otherIterator;
+        private boolean takenFromOtherIterator = false;
 
         public EventIterator(Iterator<Event> priorityIterator, Iterator<Event> otherIterator) {
             this.priorityIterator = priorityIterator;
@@ -75,10 +76,21 @@ public class EventCollection implements Iterable<Event> {
             if (!this.hasNext())
                 throw new NoSuchElementException();
 
-            if (this.priorityIterator.hasNext())
+            if (this.priorityIterator.hasNext()) {
                 return this.priorityIterator.next();
-            else
+            } else {
+                if (!this.takenFromOtherIterator)
+                    this.takenFromOtherIterator = true;
                 return this.otherIterator.next();
+            }
+        }
+
+        @Override
+        public void remove() {
+            if (!this.takenFromOtherIterator)
+                this.priorityIterator.remove();
+            else
+                this.otherIterator.remove();
         }
     }
 }

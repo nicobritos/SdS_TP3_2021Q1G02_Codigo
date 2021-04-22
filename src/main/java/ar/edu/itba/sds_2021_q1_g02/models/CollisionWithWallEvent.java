@@ -18,6 +18,14 @@ public class CollisionWithWallEvent extends Event {
     }
 
     @Override
+    public void setCollided() {
+        super.setCollided();
+
+        Velocity newVelocity = Equations.getInstance().evolveParticleVelocity(this.particle, this.wallDirection);
+        this.particle.setVelocity(newVelocity);
+    }
+
+    @Override
     public EventType getEventType() {
         return this.eventType;
     }
