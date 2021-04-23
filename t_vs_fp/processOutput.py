@@ -101,13 +101,13 @@ plt.ylim((0, 1.5))
 
 plt.plot(f1x, f1y,4)
 plt.plot(f2x, f2y,4)
-# plt.plot(f3x, f3y,4)
+plt.plot(f3x, f3y,4)
 
 
 blue_patch = mpatches.Patch(color='blue', label='ap=0.01')
 green_patch = mpatches.Patch(color='green', label='ap=0.05')
 purple_patch = mpatches.Patch(color='purple', label='ap=0.005')
-plt.legend(handles=[red_patch, blue_patch, purple_patch])
+plt.legend(handles=[green_patch, blue_patch, purple_patch])
 
 plt.xlabel('Tiempo (s)')
 plt.ylabel('Fraccion de particulas del lado izquierdo')
