@@ -55,7 +55,7 @@ public class App {
 
                     return s;
                 },
-                step -> "R:/output/output_" + step + ".xyz",
+                step -> "output/output_" + step + ".xyz",
                 dimen
         ));
 
@@ -75,7 +75,7 @@ public class App {
                             step.getAbsoluteTime() + ";" +
                             step.getLeftOccupationFactor();
                 },
-                step -> "R:/output/output_" + step + ".csv"
+                step -> "output/output_" + step + ".csv"
         ));
 
         GD.addSerializer(new ConsoleSerializer(
