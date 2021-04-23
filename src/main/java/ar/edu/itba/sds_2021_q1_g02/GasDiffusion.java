@@ -45,8 +45,7 @@ public class GasDiffusion {
             }
         }
 
-        System.out.println(this.pressureParticlesCollided);
-        System.out.println(this.systemPressure);
+        System.out.println("Pressure: " + this.systemPressure + "; collisions: " + this.pressureParticlesCollided);
     }
 
     private Step simulateStep(Step previousStep, boolean inEquilibrium) {
