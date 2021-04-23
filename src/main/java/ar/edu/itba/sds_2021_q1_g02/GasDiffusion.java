@@ -11,6 +11,7 @@ public class GasDiffusion {
     private final List<Particle> particles;
     private final List<Serializer> serializers;
     private Double systemPressure = Double.POSITIVE_INFINITY;
+    private int pressureParticlesCollided = 0;
 
     public GasDiffusion(List<Particle> particles, Configuration configuration) {
         this.particles = particles;
@@ -22,12 +23,12 @@ public class GasDiffusion {
         this.serializers.add(serializer);
     }
 
-    public void simulate(int maxIterations) {
+    public void simulate() {
         this.serializeSystem();
         Step step = this.calculateFirstStep();
         this.serialize(step);
 
-        while (step.getStep() < maxIterations && !this.halfOccupationFactor(step)) {
+        while (!this.halfOccupationFactor(step)) {
             step = this.simulateStep(step, false);
             if (step == null)
                 return;
@@ -43,6 +44,8 @@ public class GasDiffusion {
                     return;
             }
         }
+
+        System.out.println(this.pressureParticlesCollided);
         System.out.println(this.systemPressure);
     }
 
@@ -74,6 +77,7 @@ public class GasDiffusion {
                             if (this.systemPressure == Double.POSITIVE_INFINITY) this.systemPressure = 0.0;
                             this.systemPressure += Pressure.calculate(initSpeed, finalSpeed,
                                     event.getParticle().getMass(), this.configuration.getDt(), d);
+                            this.pressureParticlesCollided += 1;
                         }
                     }
                 }
