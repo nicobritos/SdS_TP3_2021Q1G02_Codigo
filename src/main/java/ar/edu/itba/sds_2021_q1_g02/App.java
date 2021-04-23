@@ -30,53 +30,53 @@ public class App {
         GasDiffusion GD = new GasDiffusion(particles.getKey(), new Configuration(dimen, OCCUPATION_FACTOR_TOLERANCE,
                 DT));
 
-        GD.addSerializer(new OvitoSerializer(
-                (systemParticles, step) -> (systemParticles.size() + 2) + "\n" + "Properties=id:R:1:radius:R:1:pos:R" +
-                        ":2:Velocity:R:2:mass:R:1:color:R:3:transparency:R:1",
-                (particle, step) -> {
-                    // id (1), radius (1), pos (2), size (1), color (3, RGB)";
-                    String s = particle.getId() + "\t" +
-                            particle.getRadius() + "\t" +
-                            particle.getPosition().getX() + "\t" +
-                            particle.getPosition().getY() + "\t" +
-                            particle.getVelocity().getxSpeed() + "\t" +
-                            particle.getVelocity().getySpeed() + "\t" +
-                            particle.getMass() + "\t";
+//        GD.addSerializer(new OvitoSerializer(
+//                (systemParticles, step) -> (systemParticles.size() + 2) + "\n" + "Properties=id:R:1:radius:R:1:pos:R" +
+//                        ":2:Velocity:R:2:mass:R:1:color:R:3:transparency:R:1",
+//                (particle, step) -> {
+//                    // id (1), radius (1), pos (2), size (1), color (3, RGB)";
+//                    String s = particle.getId() + "\t" +
+//                            particle.getRadius() + "\t" +
+//                            particle.getPosition().getX() + "\t" +
+//                            particle.getPosition().getY() + "\t" +
+//                            particle.getVelocity().getxSpeed() + "\t" +
+//                            particle.getVelocity().getySpeed() + "\t" +
+//                            particle.getMass() + "\t";
+//
+//                    if (particle.getId() >= 0) {
+//                        Color color = getParticleColor(particle, dimen);
+//                        s += color.getRed() + "\t" +
+//                                color.getGreen() + "\t" +
+//                                color.getBlue() + "\t" +
+//                                "0.0";
+//                    } else {
+//                        s += "0.0\t0.0\t0.0\t1.0";
+//                    }
+//
+//                    return s;
+//                },
+//                step -> "output/output_" + step + ".xyz",
+//                dimen
+//        ));
 
-                    if (particle.getId() >= 0) {
-                        Color color = getParticleColor(particle, dimen);
-                        s += color.getRed() + "\t" +
-                                color.getGreen() + "\t" +
-                                color.getBlue() + "\t" +
-                                "0.0";
-                    } else {
-                        s += "0.0\t0.0\t0.0\t1.0";
-                    }
-
-                    return s;
-                },
-                step -> "R:/output/output_" + step + ".xyz",
-                dimen
-        ));
-
-        GD.addSerializer(new CSVSerializer(
-                (systemParticles, step) -> "id;\"radius [m]\";\"x [m]\";\"y [m]\";\"mass [kg]\";\"vx [m/s]\";\"vy " +
-                        "[m/s]\";\"dt [s]\";\"t [s]\";fp",
-                (particle, step) -> {
-                    // id (1), radius (1), pos (2), size (1), speed (2), dt (1), t (1)";
-                    return particle.getId() + ";" +
-                            particle.getRadius() + ";" +
-                            particle.getPosition().getX() + ";" +
-                            particle.getPosition().getY() + ";" +
-                            particle.getMass() + ";" +
-                            particle.getVelocity().getxSpeed() + ";" +
-                            particle.getVelocity().getySpeed() + ";" +
-                            step.getRelativeTime() + ";" +
-                            step.getAbsoluteTime() + ";" +
-                            step.getLeftOccupationFactor();
-                },
-                step -> "R:/output/output_" + step + ".csv"
-        ));
+//        GD.addSerializer(new CSVSerializer(
+//                (systemParticles, step) -> "id;\"radius [m]\";\"x [m]\";\"y [m]\";\"mass [kg]\";\"vx [m/s]\";\"vy " +
+//                        "[m/s]\";\"dt [s]\";\"t [s]\";fp",
+//                (particle, step) -> {
+//                    // id (1), radius (1), pos (2), size (1), speed (2), dt (1), t (1)";
+//                    return particle.getId() + ";" +
+//                            particle.getRadius() + ";" +
+//                            particle.getPosition().getX() + ";" +
+//                            particle.getPosition().getY() + ";" +
+//                            particle.getMass() + ";" +
+//                            particle.getVelocity().getxSpeed() + ";" +
+//                            particle.getVelocity().getySpeed() + ";" +
+//                            step.getRelativeTime() + ";" +
+//                            step.getAbsoluteTime() + ";" +
+//                            step.getLeftOccupationFactor();
+//                },
+//                step -> "output/output_" + step + ".csv"
+//        ));
 
         GD.addSerializer(new ConsoleSerializer(
                 (systemParticles, configuration) -> {
@@ -107,7 +107,7 @@ public class App {
         ));
 
         System.out.println("Running simulation");
-        GD.simulate(CommandParser.getInstance().getMaxIterations());
+        GD.simulate();
     }
 
     private static Color getParticleColor(Particle particle, Dimen dimen) {

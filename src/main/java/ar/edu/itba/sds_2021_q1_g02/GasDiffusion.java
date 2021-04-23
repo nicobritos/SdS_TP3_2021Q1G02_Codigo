@@ -23,7 +23,7 @@ public class GasDiffusion {
         this.serializers.add(serializer);
     }
 
-    public void simulate(int maxIterations) {
+    public void simulate() {
         this.serializeSystem();
         Step step = this.calculateFirstStep();
         this.serialize(step);
@@ -132,17 +132,20 @@ public class GasDiffusion {
             CollisionWithParticleEvent collisionEvent = (CollisionWithParticleEvent) event;
 
             events.remove(collisionEvent.getInverse());
-            if (collisionEvent.hasCollided()) {
-                // Tenemos que recalcular todos los eventos en donde las particulas que participaron
-                // en la colision participen como "otherParticle"
-                this.processVoidedEvents(eventMap, particleMap, collisionEvent.getOtherParticle(), absoluteTime);
-            }
+            // Tenemos que recalcular todos los eventos en donde las particulas que participaron
+            // en la colision participen como "otherParticle"
+            this.processVoidedEvents(eventMap, particleMap, collisionEvent.getOtherParticle(), absoluteTime);
         }
         if (event.hasCollided()) {
             this.processVoidedEvents(eventMap, particleMap, event.getParticle(), absoluteTime);
         }
         if (events.isEmpty())
             eventMap.remove(event.getTime());
+        if (event.hasCollided()) {
+            // Tenemos que recalcular todos los eventos en donde las particulas que participaron
+            // en la colision participen como "particle"
+            this.processVoidedEvents(eventMap, particleMap, event.getParticle(), absoluteTime);
+        }
 
         // Recalculamos proximos eventos de las particulas colisionadas
         EventCollection newEvents = this.getEvent(event.getParticle(), absoluteTime);
@@ -185,14 +188,11 @@ public class GasDiffusion {
     private void insertEventInMap(Map<Double, EventCollection> eventMap, Map<Particle, Set<Event>> particleMap,
                                   Event event) {
         EventCollection eventCollection = eventMap.computeIfAbsent(event.getTime(), time -> new EventCollection());
-        Set<Event> particleEvents = particleMap.computeIfAbsent(event.getParticle(), time -> new HashSet<>());
 
         // Lo sacamos por si ya existe. Como hashcode no contempla el contador de colisiones
         // entonces no se va a agregar un evento valido
         eventCollection.remove(event);
-        particleEvents.remove(event);
         eventCollection.add(event);
-        particleEvents.add(event);
 
         if (event.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
             CollisionWithParticleEvent collisionEvent = (CollisionWithParticleEvent) event;
