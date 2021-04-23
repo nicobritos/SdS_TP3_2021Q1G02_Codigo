@@ -11,6 +11,7 @@ public class GasDiffusion {
     private final List<Particle> particles;
     private final List<Serializer> serializers;
     private Double systemPressure = Double.POSITIVE_INFINITY;
+    private int pressureParticlesCollided = 0;
 
     public GasDiffusion(List<Particle> particles, Configuration configuration) {
         this.particles = particles;
@@ -22,12 +23,12 @@ public class GasDiffusion {
         this.serializers.add(serializer);
     }
 
-    public void simulate(int maxIterations) {
+    public void simulate() {
         this.serializeSystem();
         Step step = this.calculateFirstStep();
         this.serialize(step);
 
-        while (step.getStep() < maxIterations && !this.halfOccupationFactor(step)) {
+        while (!this.halfOccupationFactor(step)) {
             step = this.simulateStep(step, false);
             if (step == null)
                 return;
@@ -43,7 +44,8 @@ public class GasDiffusion {
                     return;
             }
         }
-        System.out.println(this.systemPressure);
+
+        System.out.println("Pressure: " + this.systemPressure + "; collisions: " + this.pressureParticlesCollided);
     }
 
     private Step simulateStep(Step previousStep, boolean inEquilibrium) {
@@ -74,6 +76,7 @@ public class GasDiffusion {
                             if (this.systemPressure == Double.POSITIVE_INFINITY) this.systemPressure = 0.0;
                             this.systemPressure += Pressure.calculate(initSpeed, finalSpeed,
                                     event.getParticle().getMass(), this.configuration.getDt(), d);
+                            this.pressureParticlesCollided += 1;
                         }
                     }
                 }
@@ -129,14 +132,17 @@ public class GasDiffusion {
             CollisionWithParticleEvent collisionEvent = (CollisionWithParticleEvent) event;
 
             events.remove(collisionEvent.getInverse());
-            if (collisionEvent.hasCollided()) {
-                // Tenemos que recalcular todos los eventos en donde las particulas que participaron
-                // en la colision participen como "otherParticle"
-                this.processVoidedEvents(eventMap, particleMap, collisionEvent.getOtherParticle(), absoluteTime);
-            }
+            // Tenemos que recalcular todos los eventos en donde las particulas que participaron
+            // en la colision participen como "otherParticle"
+            this.processVoidedEvents(eventMap, particleMap, collisionEvent.getOtherParticle(), absoluteTime);
         }
         if (events.isEmpty())
             eventMap.remove(event.getTime());
+        if (event.hasCollided()) {
+            // Tenemos que recalcular todos los eventos en donde las particulas que participaron
+            // en la colision participen como "particle"
+            this.processVoidedEvents(eventMap, particleMap, event.getParticle(), absoluteTime);
+        }
 
         // Recalculamos proximos eventos de las particulas colisionadas
         EventCollection newEvents = this.getEvent(event.getParticle(), absoluteTime);
@@ -179,14 +185,11 @@ public class GasDiffusion {
     private void insertEventInMap(Map<Double, EventCollection> eventMap, Map<Particle, Set<Event>> particleMap,
                                   Event event) {
         EventCollection eventCollection = eventMap.computeIfAbsent(event.getTime(), time -> new EventCollection());
-        Set<Event> particleEvents = particleMap.computeIfAbsent(event.getParticle(), time -> new HashSet<>());
 
         // Lo sacamos por si ya existe. Como hashcode no contempla el contador de colisiones
         // entonces no se va a agregar un evento valido
         eventCollection.remove(event);
-        particleEvents.remove(event);
         eventCollection.add(event);
-        particleEvents.add(event);
 
         if (event.getEventType().equals(EventType.COLLISION_WITH_PARTICLE)) {
             CollisionWithParticleEvent collisionEvent = (CollisionWithParticleEvent) event;
