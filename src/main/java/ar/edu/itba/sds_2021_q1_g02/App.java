@@ -17,7 +17,7 @@ import java.util.List;
 
 public class App {
     private final static double OCCUPATION_FACTOR_TOLERANCE = 0.01;
-    private final static double DT = 50;
+    private final static double DT = 100;
 
     public static void main(String[] args) throws ParseException, IOException {
         CommandParser.getInstance().parse(args);

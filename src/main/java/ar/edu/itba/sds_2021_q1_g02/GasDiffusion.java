@@ -11,6 +11,7 @@ public class GasDiffusion {
     private final List<Particle> particles;
     private final List<Serializer> serializers;
     private Double systemPressure = Double.POSITIVE_INFINITY;
+    private int eventPressure = 0;
 
     public GasDiffusion(List<Particle> particles, Configuration configuration) {
         this.particles = particles;
@@ -27,7 +28,7 @@ public class GasDiffusion {
         Step step = this.calculateFirstStep();
         this.serialize(step);
 
-        while (step.getStep() < maxIterations && !this.halfOccupationFactor(step)) {
+        while (!this.halfOccupationFactor(step)) {
             step = this.simulateStep(step, false);
             if (step == null)
                 return;
@@ -41,9 +42,11 @@ public class GasDiffusion {
                 step = this.simulateStep(step, true);
                 if (step == null)
                     return;
+                this.serialize(step);
             }
         }
         System.out.println(this.systemPressure);
+        System.out.println(this.eventPressure);
     }
 
     private Step simulateStep(Step previousStep, boolean inEquilibrium) {
@@ -72,8 +75,8 @@ public class GasDiffusion {
                             double initSpeed = - finalSpeed;
                             double d = this.configuration.getDimen().getYvf() - this.configuration.getDimen().getYvi();
                             if (this.systemPressure == Double.POSITIVE_INFINITY) this.systemPressure = 0.0;
-                            this.systemPressure += Pressure.calculate(initSpeed, finalSpeed,
-                                    event.getParticle().getMass(), this.configuration.getDt(), d);
+                            this.systemPressure += Pressure.calculate(initSpeed, finalSpeed, event.getParticle().getMass(), this.configuration.getDt(), d);
+                            this.eventPressure ++;
                         }
                     }
                 }
@@ -134,6 +137,9 @@ public class GasDiffusion {
                 // en la colision participen como "otherParticle"
                 this.processVoidedEvents(eventMap, particleMap, collisionEvent.getOtherParticle(), absoluteTime);
             }
+        }
+        if (event.hasCollided()) {
+            this.processVoidedEvents(eventMap, particleMap, event.getParticle(), absoluteTime);
         }
         if (events.isEmpty())
             eventMap.remove(event.getTime());
