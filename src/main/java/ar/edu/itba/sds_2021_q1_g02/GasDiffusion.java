@@ -43,6 +43,7 @@ public class GasDiffusion {
                     return;
             }
         }
+        System.out.println(this.systemPressure);
     }
 
     private Step simulateStep(Step previousStep, boolean inEquilibrium) {
