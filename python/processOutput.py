@@ -43,7 +43,10 @@ def print_walls(file_path, ids, aperture):
         ids += 1
         ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(x)+'\t'+str(yp)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\t'+'250'+'\t'+'250'+'\t'+'250'+'\n')
         ids += 1
-        ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(x)+'\t'+str(0.09 - yp)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\t'+'250'+'\t'+'250'+'\t'+'250'+'\n')
+        if y == hmw - 1:
+            ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(x)+'\t'+str(0.09 - yp)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\t'+'250'+'\t'+'250'+'\t'+'250')
+        else:
+            ovito.write(str(ids) +'\t'+str(radius)+'\t'+str(x)+'\t'+str(0.09 - yp)+'\t'+str(mass)+'\t'+'0'+'\t'+'0'+'\t'+'1'+'\t'+'250'+'\t'+'250'+'\t'+'250'+'\n')
         yp+=radius* 2
     ovito.close()
 
