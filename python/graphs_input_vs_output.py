@@ -34,8 +34,8 @@ def graph_input_vs_output(data, label):
 
 
 def graph_all_inputs_vs_output(systems):
-    internal_graph_input_vs_output(systems[0], 'N = 10', '#1F77B4')
-    internal_graph_input_vs_output(systems[1], 'N = 50', '#FF7F0E')
+    internal_graph_input_vs_output(systems[0], 'N = 10 & |V| = 0,01', '#1F77B4')
+    internal_graph_input_vs_output(systems[1], 'N = 50 & |V| = 0,07', '#FF7F0E')
 
     plt.xlabel('Tamaño de la apertura (m)')
     plt.ylabel('Tiempo (s)')
